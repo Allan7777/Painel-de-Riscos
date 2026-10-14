@@ -20,7 +20,6 @@
   --input: #ffffff;
   --success: #116540;
   --danger: #ad2336;
-  --warning: #765200;
   --focus: #b97700;
   --low-bg: #e5f5ed;
   --low-text: #12603e;
@@ -47,7 +46,6 @@
     --input: #202c3c;
     --success: #94e2b9;
     --danger: #ffb2bd;
-    --warning: #ffe08b;
     --focus: #f3cd75;
     --low-bg: #143d2e;
     --low-text: #94e2b9;
@@ -282,9 +280,8 @@ p { overflow-wrap: anywhere; }
 
 .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .storage { font-size: .75rem; color: var(--muted); margin-top: 8px; }
-.storage strong, .storage span { display: block; }
+.storage strong { display: block; }
 .storage.saved strong { color: var(--success); }
-.backup-warn { color: var(--warning); font-weight: 650; }
 
 .content {
   max-width: 1600px;
@@ -324,14 +321,13 @@ p { overflow-wrap: anywhere; }
 
 .filters {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
   align-items: end;
   gap: 12px;
   margin-bottom: 20px;
 }
 
-.filters .search { grid-column: span 3; }
-.filters .sort { grid-column: span 2; }
+.filters .search { grid-column: 1 / -1; }
 
 .metrics {
   display: grid;
@@ -418,48 +414,6 @@ p { overflow-wrap: anywhere; }
 .medium { background: var(--medium-bg); color: var(--medium-text); }
 .high { background: var(--high-bg); color: var(--high-text); }
 .extreme { background: var(--extreme-bg); color: var(--extreme-text); }
-
-/* Matriz de calor */
-.heat {
-  border-collapse: separate;
-  border-spacing: 4px;
-  width: 100%;
-  min-width: 420px;
-  table-layout: fixed;
-}
-
-.heat caption {
-  caption-side: bottom;
-  text-align: left;
-  padding-top: 8px;
-  color: var(--muted);
-  font-size: .8rem;
-}
-
-.heat th {
-  padding: 4px;
-  border: 0;
-  background: transparent;
-  text-align: center;
-  vertical-align: middle;
-  font-size: .75rem;
-}
-
-.heat tbody th { width: 22%; text-align: right; padding-right: 8px; }
-.heat td { padding: 0; border: 0; }
-
-.heat-cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 48px;
-  border-color: transparent;
-  font-size: 1rem;
-  font-weight: 800;
-}
-
-.heat-cell.zero { opacity: .55; }
 
 .table-wrap { overflow-x: auto; }
 
@@ -549,7 +503,6 @@ progress { flex: 1; height: 10px; accent-color: #258864; }
 .action-item select { width: auto; max-width: 100%; }
 .action-item p { margin: 5px 0; }
 .overdue { color: var(--danger); font-weight: 650; }
-.soon { color: var(--warning); font-weight: 650; }
 
 .action-form {
   background: var(--surface-alt);
@@ -636,10 +589,7 @@ dialog::backdrop { background: #0b1326aa; }
   position: fixed;
   right: 20px;
   bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  max-width: min(480px, calc(100vw - 40px));
+  max-width: min(440px, calc(100vw - 40px));
   padding: 14px 18px;
   background: #22384f;
   color: #fff;
@@ -648,23 +598,69 @@ dialog::backdrop { background: #0b1326aa; }
   z-index: 50;
 }
 
-.toast button { flex-shrink: 0; }
+.toast { display: flex; align-items: center; gap: 14px; }
+.toast .toast-undo { background: #fff; color: #22384f; border-color: #fff; flex-shrink: 0; }
+.load-more { text-align: center; margin: 22px 0; }
+
+.heat-panel { margin-bottom: 20px; }
+
+.heatmap {
+  display: grid;
+  grid-template-columns: minmax(70px, 130px) repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  margin: 14px 0;
+}
+
+.heat-axis {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 6px;
+  text-align: right;
+  font-size: .75rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.heat-axis.x { justify-content: center; padding: 4px 0 0; text-align: center; }
+
+.heat-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 58px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.heat-cell strong { font-size: 1.2rem; line-height: 1.2; }
+.heat-cell small { font-size: .7rem; font-weight: 500; }
+.heat-cell.zero strong { font-weight: 400; }
+
+.code {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 7px;
+  border-radius: 5px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  font: 700 .8rem ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--muted);
+}
+
+.score-row.residual { margin-top: 12px; }
 
 .highlight { outline: 4px solid var(--focus) !important; outline-offset: 4px; }
 .mobile-menu { display: none; }
 #print-area { display: none; }
 
-@media (prefers-reduced-motion: reduce) {
-  * { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
-}
-
 @media (max-width: 1150px) {
   .app { grid-template-columns: 280px minmax(0, 1fr); }
   .content { padding: 22px; }
   .filters { grid-template-columns: 1fr 1fr; }
-  .filters > button,
-  .filters .search,
-  .filters .sort { grid-column: 1 / -1; }
+  .filters > button { grid-column: 1 / -1; }
   .two-columns, .entity-list { grid-template-columns: 1fr; }
   .topbar { flex-wrap: wrap; }
 }
@@ -682,13 +678,13 @@ dialog::backdrop { background: #0b1326aa; }
   .metric strong { font-size: 1.9rem; }
   .form-grid { grid-template-columns: 1fr; }
   .full { grid-column: auto; }
+  .heatmap { grid-template-columns: 62px repeat(5, minmax(0, 1fr)); gap: 4px; }
+  .heat-axis { font-size: .65rem; padding-right: 3px; }
+  .heat-cell { min-height: 48px; padding: 3px; }
   .score-row { grid-template-columns: 1fr 1fr; }
   .score { grid-column: 1 / -1; text-align: center; }
   .risk-card { padding: 16px; }
   .modal-body { padding: 17px; }
-  .heat { min-width: 0; }
-  .heat .lbl { display: none; }
-  .heat tbody th { width: 12%; }
 }
 
 @media (max-width: 390px) {
@@ -755,11 +751,11 @@ dialog::backdrop { background: #0b1326aa; }
   }
 }
 </style>
+
 </head>
 
 <body>
 <a class="skip" href="#main">Ir para o conteúdo</a>
-<noscript><p style="padding:20px">Este painel precisa de JavaScript para funcionar.</p></noscript>
 
 <div class="app">
   <aside class="sidebar" id="sidebar" aria-label="Navegação principal">
@@ -807,12 +803,13 @@ dialog::backdrop { background: #0b1326aa; }
         <div class="storage" id="storage" role="status" aria-live="polite">
           <strong id="storage-status"></strong>
           <span id="last-change"></span>
-          <span id="backup-status" class="backup-warn"></span>
         </div>
       </div>
     </header>
 
-    <main class="content" id="main" tabindex="-1"></main>
+    <main class="content" id="main" tabindex="-1">
+      <p class="muted">Carregando dados…</p>
+    </main>
   </div>
 </div>
 
@@ -828,12 +825,13 @@ dialog::backdrop { background: #0b1326aa; }
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 <section id="print-area" aria-label="Relatório para impressão"></section>
 
+<noscript><p style="padding:20px">Este painel precisa de JavaScript para funcionar.</p></noscript>
 <script>
 "use strict";
+/* ===== model.js ===== */
+/* Modelo de domínio: constantes, cálculos de risco e validação de backups (sem acesso ao DOM). */
 
-/* =====================================================================
-   1. CONFIGURAÇÃO DO MODELO
-   ===================================================================== */
+/* CONFIGURAÇÃO DO MODELO */
 const MODEL = {
   probability: ["Muito baixa", "Baixa", "Média", "Alta", "Muito alta"],
   impact: ["Insignificante", "Menor", "Moderado", "Maior", "Catastrófico"],
@@ -842,7 +840,6 @@ const MODEL = {
   projectStatuses: ["Planejado", "Em andamento", "Concluído", "Cancelado"],
   actionStatuses: ["Pendente", "Em andamento", "Concluída"],
   critical: 10,
-  soonDays: 7,
   bands: [
     { name: "Baixo", min: 1, max: 4, css: "low", color: "#22885e" },
     { name: "Médio", min: 5, max: 9, css: "medium", color: "#b98100" },
@@ -851,17 +848,8 @@ const MODEL = {
   ]
 };
 
-const STORAGE_KEY = "agu.riscos.corporativos.v1";
-const THEME_KEY = "agu.riscos.theme.v1";
-const EXPORT_KEY = "agu.riscos.lastExport.v1";
-const SCHEMA_VERSION = 1;
-const DELETE_WITH_RISKS = "__delete_with_risks__";
-
-/* =====================================================================
-   2. UTILITÁRIOS
-   ===================================================================== */
-const $ = (selector, root = document) => root.querySelector(selector);
-const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+const SCHEMA_VERSION = 2;
+const SUPPORTED_SCHEMAS = [1, 2];
 
 const escapeHTML = value => String(value ?? "").replace(
   /[&<>"']/g,
@@ -887,37 +875,37 @@ function localDate(date = new Date()) {
   ].join("-");
 }
 
-function localDatePlus(days) {
-  const date = new Date();
-  date.setDate(date.getDate() + days);
-  return localDate(date);
-}
-
 const dateBR = value => value ? value.split("-").reverse().join("/") : "Não informado";
 const dateTimeBR = value => value ? new Date(value).toLocaleString("pt-BR") : "Nenhuma alteração";
 const riskDescription = value => String(value).replace(/^(?:\s*risco\s*:\s*)+/i, "").trim();
-
-/* Regras de negócio */
 const riskScore = risk => risk.probability * risk.impact;
-const bandOfScore = score => MODEL.bands.find(b => score >= b.min && score <= b.max);
-const riskBand = risk => bandOfScore(riskScore(risk));
+const bandFor = score => MODEL.bands.find(b => score >= b.min && score <= b.max);
+const riskBand = risk => bandFor(riskScore(risk));
+const residualScore = risk =>
+  risk.residualProbability && risk.residualImpact
+    ? risk.residualProbability * risk.residualImpact : null;
+const riskCode = risk => "R-" + String(risk.number).padStart(3, "0");
 const isLate = action => action.status !== "Concluída" && action.due < localDate();
-const isSoon = action => action.status !== "Concluída" &&
-  action.due >= localDate() && action.due <= localDatePlus(MODEL.soonDays);
 
-const SORTERS = {
-  score: (a, b) => riskScore(b) - riskScore(a) ||
-    a.activity.localeCompare(b.activity, "pt-BR"),
-  recent: (a, b) => b.updatedAt.localeCompare(a.updatedAt),
-  activity: (a, b) => a.activity.localeCompare(b.activity, "pt-BR")
+function nextDue(risk) {
+  const dates = risk.actions.filter(a => a.status !== "Concluída").map(a => a.due).sort();
+  return dates[0] || "9999-99-99";
+}
+
+const SORTS = {
+  "level-desc": ["Nível (maior primeiro)", (a, b) => riskScore(b) - riskScore(a)],
+  "level-asc": ["Nível (menor primeiro)", (a, b) => riskScore(a) - riskScore(b)],
+  "code": ["Código (mais antigos primeiro)", (a, b) => a.number - b.number],
+  "code-desc": ["Código (mais recentes primeiro)", (a, b) => b.number - a.number],
+  "updated": ["Última atualização", (a, b) => b.updatedAt.localeCompare(a.updatedAt)],
+  "due": ["Próximo prazo de ação", (a, b) => nextDue(a).localeCompare(nextDue(b))],
+  "activity": ["Atividade (A–Z)", (a, b) => a.activity.localeCompare(b.activity, "pt-BR")]
 };
 
-/* =====================================================================
-   3. ESTADO DA APLICAÇÃO
-   ===================================================================== */
 function emptyState() {
   return {
     schemaVersion: SCHEMA_VERSION,
+    nextRiskNumber: 1,
     unit: {
       acronym: "UNIDADE",
       name: "Unidade não configurada",
@@ -931,74 +919,20 @@ function emptyState() {
   };
 }
 
-const emptyFilters = () => ({
-  kind: "all",
-  entity: "",
-  typology: "",
-  severity: "",
-  search: "",
-  sort: "score"
-});
-
-let state;
-let view = "dashboard";
-let filters = emptyFilters();
-let serviceSearch = "";
-let storageStatus = "Alterações em memória";
-let storageBlocked = false;
-let loadMessage = "";
-let modalOpener = null;
-let toastTimer;
-let preparedPrint = false;
-let printSettings = { scope: "all", actions: true };
-let lastExport = null;
-try { lastExport = localStorage.getItem(EXPORT_KEY); } catch {}
-
-/* Consultas sobre o estado */
-const findRisk = id => state.risks.find(risk => risk.id === id);
-
-function sourceOf(risk) {
-  const list = risk.linkType === "process" ? state.services : state.projects;
-  return list.find(item => item.id === risk.linkId);
-}
-
 function actionRows(risks) {
   return risks.flatMap(risk => risk.actions.map(action => ({ risk, action })));
 }
 
-function riskCounts() {
-  const counts = new Map();
-  for (const risk of state.risks) {
-    counts.set(risk.linkId, (counts.get(risk.linkId) || 0) + 1);
+/* O risco residual exige probabilidade e impacto juntos; o par ausente herda o valor inerente. */
+function normalizeResidual(risk, changed) {
+  const other = changed === "residualProbability" ? "residualImpact" : "residualProbability";
+  if (risk[changed] === null) risk[other] = null;
+  else if (risk[other] === null) {
+    risk[other] = other === "residualImpact" ? risk.impact : risk.probability;
   }
-  return counts;
 }
 
-function selectedRisks() {
-  const query = filters.search.toLocaleLowerCase("pt-BR");
-
-  return state.risks.filter(risk => {
-    const text = [
-      risk.activity, risk.description, risk.cause,
-      risk.consequence, sourceOf(risk)?.name
-    ].join(" ").toLocaleLowerCase("pt-BR");
-
-    return (filters.kind === "all" || risk.linkType === filters.kind) &&
-      (!filters.entity || risk.linkId === filters.entity) &&
-      (!filters.typology || risk.typology === filters.typology) &&
-      (!filters.severity || riskBand(risk).name === filters.severity) &&
-      (!query || text.includes(query));
-  }).sort(SORTERS[filters.sort] || SORTERS.score);
-}
-
-function backupPending() {
-  const hasData = state.risks.length + state.services.length + state.projects.length > 0;
-  return hasData && !!state.lastModified && (!lastExport || state.lastModified > lastExport);
-}
-
-/* =====================================================================
-   4. VALIDAÇÃO DE BACKUPS
-   ===================================================================== */
+/* VALIDAÇÃO DE BACKUPS */
 function validateState(raw, isBackup = false) {
   const fail = message => { throw new Error(message); };
 
@@ -1062,8 +996,8 @@ function validateState(raw, isBackup = false) {
 
   object(raw, "Arquivo");
 
-  if (raw.schemaVersion !== SCHEMA_VERSION) {
-    fail("Versão de backup incompatível. Esperada: " + SCHEMA_VERSION + ".");
+  if (!SUPPORTED_SCHEMAS.includes(raw.schemaVersion)) {
+    fail("Versão de backup incompatível. Versões aceitas: " + SUPPORTED_SCHEMAS.join(" ou ") + ".");
   }
 
   if (isBackup) timestamp(raw.exportedAt, "Data da exportação");
@@ -1071,6 +1005,7 @@ function validateState(raw, isBackup = false) {
 
   const result = {
     schemaVersion: SCHEMA_VERSION,
+    nextRiskNumber: 1,
     unit: {},
     lastModified: raw.lastModified === null
       ? null
@@ -1154,6 +1089,28 @@ function validateState(raw, isBackup = false) {
       item[key] = risk[key];
     }
 
+    const residualP = risk.residualProbability ?? null;
+    const residualI = risk.residualImpact ?? null;
+
+    if ((residualP === null) !== (residualI === null)) {
+      fail(label + ": informe probabilidade e impacto residuais juntos, ou nenhum.");
+    }
+
+    for (const value of [residualP, residualI]) {
+      if (value !== null && (!Number.isInteger(value) || value < 1 || value > 5)) {
+        fail(label + ": risco residual deve ter valores inteiros de 1 a 5.");
+      }
+    }
+
+    item.residualProbability = residualP;
+    item.residualImpact = residualI;
+
+    const number = risk.number ?? null;
+    if (number !== null && (!Number.isInteger(number) || number < 1 || number > 9999999)) {
+      fail(label + ": código numérico inválido.");
+    }
+    item.number = number;
+
     item.createdAt = timestamp(risk.createdAt, label + " / criação");
     item.updatedAt = timestamp(risk.updatedAt, label + " / atualização");
 
@@ -1177,6 +1134,26 @@ function validateState(raw, isBackup = false) {
 
     return item;
   });
+
+  /* Códigos legíveis (R-001): preserva os existentes e numera bases antigas por data de criação. */
+  const takenNumbers = new Set();
+  let highest = 0;
+
+  for (const item of result.risks) {
+    if (item.number === null) continue;
+    if (takenNumbers.has(item.number)) fail("Código de risco duplicado: R-" + item.number + ".");
+    takenNumbers.add(item.number);
+    highest = Math.max(highest, item.number);
+  }
+
+  result.risks
+    .filter(item => item.number === null)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+    .forEach(item => { item.number = ++highest; });
+
+  const declared = Number.isInteger(raw.nextRiskNumber) && raw.nextRiskNumber > 0
+    ? raw.nextRiskNumber : 1;
+  result.nextRiskNumber = Math.max(highest + 1, declared);
 
   return result;
 }
@@ -1221,116 +1198,586 @@ function removeLegacyExamples(base) {
   return base;
 }
 
-/* =====================================================================
-   5. ARMAZENAMENTO, DESFAZER E SINCRONIZAÇÃO
-   ===================================================================== */
-function persist() {
-  if (storageBlocked) {
-    storageStatus = "Alterações em memória";
-    return;
-  }
+/* ===== storage.js ===== */
+/*
+ * Camada de armazenamento.
+ *
+ * Preferência: IndexedDB (sem o limite de ~5 MB do localStorage).
+ * Alternativas, nesta ordem: localStorage (modo compatível) e memória.
+ *
+ * Também faz:
+ *  - migração única dos dados antigos do localStorage para o IndexedDB;
+ *  - detecção de conflito entre abas (compara a "última alteração" gravada);
+ *  - aviso às outras abas quando algo é salvo (BroadcastChannel / evento storage).
+ */
 
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    storageStatus = "Salvo neste navegador";
-  } catch {
-    storageStatus = "Armazenamento local indisponível";
-  }
+const STATUS = {
+  saved: "Salvo neste navegador",
+  saving: "Salvando…",
+  memory: "Alterações em memória",
+  unavailable: "Armazenamento local indisponível",
+  quota: "Cota do navegador excedida",
+  stale: "Dados desatualizados — recarregue a página"
+};
+
+const DB_NAME = "agu-riscos";
+const STORE = "kv";
+const KEY = "state";
+const LEGACY_KEY = "agu.riscos.corporativos.v1";
+const MIGRATED_FLAG = "agu.riscos.idb-migrated.v1";
+const LOCAL_QUOTA_CHARS = 5000000;
+const CHANNEL_NAME = "agu-riscos-sync";
+
+let backend = "memory"; // "idb" | "localstorage" | "memory"
+let db = null;
+let knownVersion = null; // lastModified que esta aba leu ou gravou por último
+let channel = null;
+let pending = null;
+let writing = null;
+let localChars = 0;
+let persistenceAsked = false;
+const listeners = [];
+
+const importLimitMb = () => (backend === "idb" ? 50 : 4);
+
+/* ---------- acesso seguro ao localStorage ---------- */
+function lsGet(key) {
+  try { return localStorage.getItem(key); } catch { return null; }
 }
 
-function load() {
-  state = emptyState();
+function lsSet(key, value) {
+  try { localStorage.setItem(key, value); return true; } catch { return false; }
+}
 
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+const hasLocalStorage = () => {
+  try { return typeof localStorage !== "undefined" && localStorage !== null; } catch { return false; }
+};
 
-    if (saved === null) {
-      persist();
+/* ---------- IndexedDB ---------- */
+function openDB() {
+  return new Promise((resolve, reject) => {
+    if (typeof indexedDB === "undefined" || !indexedDB) {
+      reject(new Error("IndexedDB indisponível."));
       return;
     }
 
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onupgradeneeded = () => request.result.createObjectStore(STORE);
+    request.onerror = () => reject(request.error || new Error("Falha ao abrir o IndexedDB."));
+    request.onblocked = () => reject(new Error("Abertura do IndexedDB bloqueada."));
+    request.onsuccess = () => {
+      const connection = request.result;
+      connection.onversionchange = () => connection.close();
+      resolve(connection);
+    };
+  });
+}
+
+function idbRead() {
+  return new Promise((resolve, reject) => {
+    const request = db.transaction(STORE, "readonly").objectStore(STORE).get(KEY);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+/* Leitura e gravação na mesma transação: se outra aba gravou nesse meio-tempo, há conflito. */
+function idbWrite(value, force) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    const store = tx.objectStore(STORE);
+    let conflict = false;
+
+    const read = store.get(KEY);
+    read.onsuccess = () => {
+      const current = read.result;
+      const currentVersion = current ? (current.lastModified ?? null) : null;
+
+      if (!force && current && currentVersion !== knownVersion) {
+        conflict = true;
+        tx.abort();
+        return;
+      }
+
+      store.put(value, KEY);
+    };
+
+    tx.oncomplete = () => resolve({ conflict: false });
+    tx.onabort = () => (conflict
+      ? resolve({ conflict: true })
+      : reject(tx.error || new Error("Transação abortada.")));
+  });
+}
+
+/* ---------- validação ao carregar ---------- */
+function prepare(raw) {
+  const valid = validateState(raw);
+  const before = JSON.stringify(valid);
+  const state = removeLegacyExamples(valid);
+  const changed = JSON.stringify(state) !== before || raw.schemaVersion !== SCHEMA_VERSION;
+  return { state, changed };
+}
+
+const unreadable = error =>
+  "A base salva não pôde ser lida: " + error.message +
+  " A cópia anterior será preservada. Importe um backup válido para retomar o salvamento.";
+
+async function initIDB(out) {
+  const raw = await idbRead();
+
+  if (raw !== undefined) {
     try {
-      const valid = validateState(JSON.parse(saved));
-      const before = JSON.stringify(valid);
-      state = removeLegacyExamples(valid);
-      storageStatus = "Salvo neste navegador";
-      if (JSON.stringify(state) !== before) persist();
+      const { state, changed } = prepare(raw);
+      out.state = state;
+      knownVersion = raw.lastModified ?? null;
+      if (changed) await writeBackend(state, true);
     } catch (error) {
-      storageBlocked = true;
-      storageStatus = "Alterações em memória";
-      loadMessage = "A base salva não pôde ser lida: " + error.message +
-        " A cópia anterior será preservada. Importe um backup válido para retomar o salvamento.";
+      // Aqui só a validação lança; falhas de gravação voltam como resultado.
+      out.blocked = true;
+      out.status = STATUS.memory;
+      out.message = unreadable(error);
     }
-  } catch {
-    storageStatus = "Armazenamento local indisponível";
+    return;
+  }
+
+  const legacy = lsGet(LEGACY_KEY);
+
+  if (legacy !== null && lsGet(MIGRATED_FLAG) === null) {
+    try {
+      const { state } = prepare(JSON.parse(legacy));
+      out.state = state;
+      out.migrated = true;
+      knownVersion = null;
+      const result = await writeBackend(state, true);
+      if (result.ok) lsSet(MIGRATED_FLAG, "1");
+      else out.status = result.status;
+    } catch (error) {
+      out.blocked = true;
+      out.status = STATUS.memory;
+      out.message = unreadable(error);
+    }
+    return;
+  }
+
+  knownVersion = null;
+  await writeBackend(out.state, true);
+}
+
+function initLocal(out) {
+  const saved = lsGet(LEGACY_KEY);
+
+  if (saved === null) {
+    const written = writeLocal(out.state);
+    if (!written.ok) out.status = written.status;
+    return;
+  }
+
+  localChars = saved.length;
+
+  try {
+    const { state, changed } = prepare(JSON.parse(saved));
+    out.state = state;
+    if (changed) writeLocal(state);
+  } catch (error) {
+    out.blocked = true;
+    out.status = STATUS.memory;
+    out.message = unreadable(error);
   }
 }
 
-function commit(message = "Alterações salvas.", risk = null, undo = null) {
+function writeLocal(value) {
+  try {
+    const json = JSON.stringify(value);
+    localStorage.setItem(LEGACY_KEY, json);
+    localChars = json.length;
+    return { ok: true, status: STATUS.saved };
+  } catch (error) {
+    return {
+      ok: false,
+      status: error?.name === "QuotaExceededError" ? STATUS.quota : STATUS.unavailable
+    };
+  }
+}
+
+/* ---------- API pública ---------- */
+async function initStorage() {
+  const out = {
+    state: emptyState(),
+    status: STATUS.saved,
+    blocked: false,
+    message: "",
+    migrated: false,
+    backend: "memory",
+    usageRatio: 0
+  };
+
+  try {
+    db = await openDB();
+    backend = "idb";
+  } catch {
+    backend = hasLocalStorage() ? "localstorage" : "memory";
+  }
+
+  if (backend === "idb") {
+    try {
+      await initIDB(out);
+      try {
+        channel = new BroadcastChannel(CHANNEL_NAME);
+        channel.onmessage = () => notify();
+      } catch { /* BroadcastChannel indisponível: a detecção por versão continua funcionando */ }
+    } catch {
+      backend = hasLocalStorage() ? "localstorage" : "memory";
+      out.migrated = false;
+    }
+  }
+
+  if (backend === "localstorage") {
+    initLocal(out);
+    window.addEventListener("storage", event => {
+      if (event.key === null || event.key === LEGACY_KEY) notify();
+    });
+  }
+
+  if (backend === "memory") {
+    out.status = STATUS.memory;
+    out.message = out.message ||
+      "Este navegador não permite armazenamento local. Exporte backups com frequência.";
+  }
+
+  out.backend = backend;
+  out.usageRatio = await usageRatio();
+  return out;
+}
+
+function notify() {
+  listeners.forEach(callback => callback());
+}
+
+function onExternalChange(callback) {
+  listeners.push(callback);
+}
+
+async function usageRatio() {
+  if (backend === "idb") {
+    try {
+      const estimate = await navigator.storage?.estimate?.();
+      return estimate?.quota ? estimate.usage / estimate.quota : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  return backend === "localstorage" ? localChars / LOCAL_QUOTA_CHARS : 0;
+}
+
+async function writeBackend(value, force) {
+  if (backend === "idb") {
+    try {
+      const result = await idbWrite(value, force);
+      if (result.conflict) return { ok: false, conflict: true, status: STATUS.stale };
+
+      knownVersion = value.lastModified ?? null;
+      channel?.postMessage({ type: "saved" });
+
+      if (!persistenceAsked) {
+        persistenceAsked = true;
+        navigator.storage?.persist?.().catch?.(() => {});
+      }
+
+      return { ok: true, status: STATUS.saved };
+    } catch (error) {
+      return {
+        ok: false,
+        status: error?.name === "QuotaExceededError" ? STATUS.quota : STATUS.unavailable
+      };
+    }
+  }
+
+  if (backend === "localstorage") return writeLocal(value);
+  return { ok: false, status: STATUS.memory };
+}
+
+/* Várias gravações seguidas são reunidas: só o estado mais recente é escrito. */
+async function flush() {
+  let result = { ok: false, status: STATUS.memory };
+
+  try {
+    while (pending) {
+      const { value, force } = pending;
+      pending = null;
+      result = await writeBackend(value, force);
+      if (result.conflict) { pending = null; break; }
+    }
+
+    result.usageRatio = await usageRatio();
+  } finally {
+    writing = null;
+  }
+
+  return result;
+}
+
+function saveState(state, { force = false } = {}) {
+  const copy = typeof structuredClone === "function"
+    ? structuredClone(state)
+    : JSON.parse(JSON.stringify(state));
+
+  pending = { value: copy, force: force || (pending?.force ?? false) };
+  if (!writing) writing = flush();
+  return writing;
+}
+
+async function storageInfo() {
+  const info = {
+    backend,
+    usage: null,
+    quota: null,
+    persistent: null,
+    legacy: canClearLegacy()
+  };
+
+  if (backend === "localstorage") {
+    info.usage = localChars;
+    info.quota = LOCAL_QUOTA_CHARS;
+    return info;
+  }
+
+  try {
+    const estimate = await navigator.storage?.estimate?.();
+    if (estimate) { info.usage = estimate.usage ?? null; info.quota = estimate.quota ?? null; }
+    const persisted = await navigator.storage?.persisted?.();
+    info.persistent = typeof persisted === "boolean" ? persisted : null;
+  } catch { /* informações opcionais */ }
+
+  return info;
+}
+
+/* A cópia antiga do localStorage só pode ser apagada depois de migrada para o IndexedDB. */
+function canClearLegacy() {
+  return backend === "idb" && lsGet(LEGACY_KEY) !== null;
+}
+
+function clearLegacyCopy() {
+  if (!canClearLegacy()) return;
+  try { localStorage.removeItem(LEGACY_KEY); } catch { /* sem efeito */ }
+}
+
+/* ===== export.js ===== */
+/* Exportações: backup JSON e planilhas CSV (sem acesso ao DOM, exceto o download). */
+
+function fileSlug(unit) {
+  return (unit.acronym || "UNIDADE")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
+function downloadFile(name, content, type) {
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+function backupJSON(state, exportedAt) {
+  return JSON.stringify({ ...state, exportedAt }, null, 2);
+}
+
+/* CSV para Excel: separador ";", BOM UTF-8 e proteção contra fórmulas (= + - @). */
+function csvCell(value) {
+  let text = value === null || value === undefined ? "" : String(value);
+  if (typeof value === "string" && /^[=+\-@\t\r]/.test(text)) text = "'" + text;
+  return /[";\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+}
+
+function buildCSV(kind, risks, sourceName) {
+  let header;
+  let rows;
+
+  if (kind === "actions") {
+    header = ["Código do risco", "Origem", "Atividade", "Ação", "Responsável", "Prazo", "Status", "Atrasada"];
+    rows = actionRows(risks).map(({ risk, action }) => [
+      riskCode(risk), sourceName(risk), risk.activity, action.description,
+      action.owner, dateBR(action.due), action.status, isLate(action) ? "Sim" : "Não"
+    ]);
+  } else {
+    header = [
+      "Código", "Vínculo", "Origem", "Atividade", "Risco", "Causa provável",
+      "Dano ou consequência", "Tipologia", "Tratamento", "Probabilidade", "Impacto",
+      "Pontuação", "Nível", "Probabilidade residual", "Impacto residual",
+      "Pontuação residual", "Nível residual", "Ações", "Ações concluídas",
+      "Criado em", "Atualizado em"
+    ];
+
+    rows = risks.map(risk => {
+      const residual = residualScore(risk);
+      return [
+        riskCode(risk),
+        risk.linkType === "process" ? "Processo" : "Projeto",
+        sourceName(risk), risk.activity, riskDescription(risk.description),
+        risk.cause, risk.consequence, risk.typology, risk.treatment,
+        risk.probability, risk.impact, riskScore(risk), riskBand(risk).name,
+        risk.residualProbability, risk.residualImpact, residual,
+        residual === null ? "" : bandFor(residual).name,
+        risk.actions.length,
+        risk.actions.filter(action => action.status === "Concluída").length,
+        dateTimeBR(risk.createdAt), dateTimeBR(risk.updatedAt)
+      ];
+    });
+  }
+
+  const content = "﻿" +
+    [header, ...rows].map(row => row.map(csvCell).join(";")).join("\r\n");
+
+  return { content, count: rows.length };
+}
+
+/* ===== app.js ===== */
+/* Interface e controle do painel. Dados: model.js · persistência: storage.js · exportação: export.js */
+
+const THEME_KEY = "agu.riscos.theme.v1";
+const QUOTA_WARNING = 0.8;
+const PAGE_SIZE = 20;
+
+const $ = (selector, root = document) => root.querySelector(selector);
+const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+
+const emptyFilters = () => ({
+  kind: "all",
+  entity: "",
+  typology: "",
+  severity: "",
+  search: "",
+  sort: "level-desc"
+});
+
+let state = emptyState();
+let view = "dashboard";
+let filters = emptyFilters();
+let serviceSearch = "";
+let storageStatus = STATUS.saving;
+let storageBlocked = false;
+let loadMessage = "";
+let modalOpener = null;
+let toastTimer;
+let preparedPrint = false;
+let printSettings = { scope: "all", actions: true };
+let staleData = false;
+let storageUsage = 0;
+let visibleLimit = PAGE_SIZE;
+let heatMode = "inherent";
+
+function sourceOf(risk) {
+  const list = risk.linkType === "process" ? state.services : state.projects;
+  return list.find(item => item.id === risk.linkId);
+}
+
+function selectedRisks() {
+  const query = filters.search.toLocaleLowerCase("pt-BR");
+
+  return state.risks.filter(risk => {
+    const text = [
+      riskCode(risk), risk.activity, risk.description, risk.cause,
+      risk.consequence, sourceOf(risk)?.name
+    ].join(" ").toLocaleLowerCase("pt-BR");
+
+    return (filters.kind === "all" || risk.linkType === filters.kind) &&
+      (!filters.entity || risk.linkId === filters.entity) &&
+      (!filters.typology || risk.typology === filters.typology) &&
+      (!filters.severity || riskBand(risk).name === filters.severity) &&
+      (!query || text.includes(query));
+  }).sort((a, b) => (SORTS[filters.sort] || SORTS["level-desc"])[1](a, b) || a.number - b.number);
+}
+
+/* ARMAZENAMENTO (ver storage.js) */
+async function persist(options = {}) {
+  if (staleData) {
+    storageStatus = STATUS.stale;
+    return { ok: false };
+  }
+
+  if (storageBlocked) {
+    storageStatus = STATUS.memory;
+    return { ok: false };
+  }
+
+  storageStatus = STATUS.saving;
+  const result = await saveState(state, options);
+  storageStatus = result.status;
+  storageUsage = result.usageRatio ?? storageUsage;
+  if (result.conflict) markStale();
+  return result;
+}
+
+function markStale() {
+  if (staleData) return;
+
+  staleData = true;
+  storageStatus = STATUS.stale;
+  loadMessage = "Os dados foram alterados em outra aba ou janela. Para não sobrescrever o trabalho de lá, " +
+    "o salvamento foi pausado nesta aba. Exporte um backup se tiver alterações novas e recarregue a página.";
+
+  if ($("#modal").open) renderHeader();
+  else render();
+}
+
+function commit(message = "Alterações salvas.", risk = null, undo = null, options = {}) {
   if (risk) risk.updatedAt = now();
   state.lastModified = now();
-  persist();
+
+  const saving = persist(options);
   renderHeader();
 
-  if (message) {
-    toast(storageStatus === "Salvo neste navegador"
-      ? message
-      : message + " Dados apenas em memória; exporte um backup.", undo);
-  }
+  saving.then(() => {
+    renderHeader();
+    if (!message) return;
+
+    if (staleData) {
+      toast(message + " Não salvo: os dados foram alterados em outra aba. Recarregue a página.", undo);
+    } else if (storageStatus !== STATUS.saved) {
+      toast(message + " Dados apenas em memória; exporte um backup.", undo);
+    } else if (storageUsage >= QUOTA_WARNING) {
+      toast(message + " Atenção: ~" + Math.round(storageUsage * 100) +
+        "% da cota do navegador em uso. Exporte um backup.", undo);
+    } else {
+      toast(message, undo);
+    }
+  });
 }
 
-/* Desfazer exclusões: guarda uma cópia do estado antes da alteração. */
-const snapshot = () => JSON.stringify(state);
+function toast(message, undo = null) {
+  clearTimeout(toastTimer);
+  const box = $("#toast");
+  box.replaceChildren(document.createTextNode(message));
 
-function undoTo(before) {
+  if (undo) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "small toast-undo";
+    button.textContent = "Desfazer";
+    button.onclick = () => { box.hidden = true; undo(); };
+    box.append(button);
+  }
+
+  box.hidden = false;
+  toastTimer = setTimeout(() => box.hidden = true, undo ? 12000 : 6500);
+}
+
+/* DESFAZER EXCLUSÕES */
+const snapshotState = () => JSON.stringify(state);
+
+function undoer(snapshot) {
   return () => {
-    state = JSON.parse(before);
+    state = JSON.parse(snapshot);
     commit("Exclusão desfeita.");
     render();
   };
 }
 
-function toast(message, undo = null) {
-  clearTimeout(toastTimer);
-  const element = $("#toast");
-  const text = document.createElement("span");
-  text.textContent = message;
-  element.replaceChildren(text);
-
-  if (undo) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "small";
-    button.textContent = "Desfazer";
-    button.onclick = () => { element.hidden = true; undo(); };
-    element.append(button);
-  }
-
-  element.hidden = false;
-  toastTimer = setTimeout(() => element.hidden = true, undo ? 10000 : 6500);
-}
-
-/* Se outra aba gravar a base, esta aba acompanha em vez de sobrescrevê-la. */
-window.addEventListener("storage", event => {
-  if (event.key !== STORAGE_KEY || storageBlocked) return;
-
-  if ($("#modal").open) {
-    toast("Os dados foram alterados em outra aba. Feche esta janela e recarregue a página para evitar perda de alterações.");
-    return;
-  }
-
-  try {
-    state = removeLegacyExamples(validateState(JSON.parse(event.newValue)));
-    render();
-    toast("Dados atualizados a partir de outra aba.");
-  } catch {
-    toast("Outra aba gravou dados inválidos. Recarregue a página.");
-  }
-});
-
-/* =====================================================================
-   6. TEMA
-   ===================================================================== */
+/* TEMA */
 function applyTheme(dark) {
   document.documentElement.dataset.theme = dark ? "dark" : "light";
   const button = $("#theme-toggle");
@@ -1342,27 +1789,32 @@ function applyTheme(dark) {
 }
 
 function setupTheme() {
-  let dark = !!globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches;
+  const system = matchMedia("(prefers-color-scheme: dark)");
+  let dark = system.matches;
   try {
-    const stored = localStorage.getItem(THEME_KEY);
-    if (stored) dark = stored === "dark";
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === "dark" || saved === "light") dark = saved === "dark";
   } catch {}
   applyTheme(dark);
 
+  system.addEventListener?.("change", event => {
+    let saved = null;
+    try { saved = localStorage.getItem(THEME_KEY); } catch {}
+    if (!saved) applyTheme(event.matches);
+  });
+
   $("#theme-toggle").addEventListener("click", () => {
-    const next = document.documentElement.dataset.theme !== "dark";
-    applyTheme(next);
+    const dark = document.documentElement.dataset.theme !== "dark";
+    applyTheme(dark);
     try {
-      localStorage.setItem(THEME_KEY, next ? "dark" : "light");
+      localStorage.setItem(THEME_KEY, dark ? "dark" : "light");
     } catch {
       toast("Tema aplicado nesta sessão. Não foi possível salvar a preferência.");
     }
   });
 }
 
-/* =====================================================================
-   7. COMPONENTES DE INTERFACE
-   ===================================================================== */
+/* COMPONENTES */
 function icon(name) {
   const paths = {
     dashboard: "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z",
@@ -1387,8 +1839,6 @@ function options(values, selected, emptyLabel) {
   }).join("");
 }
 
-const scaleOptions = key => MODEL[key].map((label, i) => [i + 1, (i + 1) + " · " + label]);
-
 function field(name, label, value = "", type = "text", required = false, prefix = "f") {
   const id = prefix + "-" + name;
   const requiredText = required ? " required" : "";
@@ -1404,11 +1854,11 @@ function field(name, label, value = "", type = "text", required = false, prefix 
     ${input}<div class="field-error" id="${id}-error"></div></div>`;
 }
 
-function selectField(name, label, values, selected, prefix = "f", required = false) {
+function selectField(name, label, values, selected, prefix = "f", required = false, emptyLabel) {
   const id = prefix + "-" + name;
   return `<div><label for="${id}">${escapeHTML(label)}${required ? " *" : ""}</label>
     <select id="${id}" name="${name}" ${required ? "required" : ""}>
-      ${options(values, selected)}
+      ${options(values, selected, emptyLabel)}
     </select><div class="field-error" id="${id}-error"></div></div>`;
 }
 
@@ -1417,9 +1867,12 @@ function emptyMessage(message, label = "Cadastrar risco", command = "new-risk") 
     <button class="primary" data-cmd="${command}">${escapeHTML(label)}</button></div>`;
 }
 
-/* =====================================================================
-   8. RENDERIZAÇÃO
-   ===================================================================== */
+function noticeHTML() {
+  if (!loadMessage) return "";
+  return `<div class="notice" role="alert">${escapeHTML(loadMessage)}${staleData
+    ? '<p><button class="small" data-cmd="reload">Recarregar página</button></p>' : ""}</div>`;
+}
+
 function renderHeader() {
   const unit = state.unit;
   const title = "Painel de Gestão de Riscos Corporativos — " +
@@ -1435,16 +1888,28 @@ function renderHeader() {
     (unit.operator || "não informado");
   $("#storage-status").textContent = storageStatus;
   $("#last-change").textContent = "Última alteração: " + dateTimeBR(state.lastModified);
-  $("#backup-status").textContent = backupPending()
-    ? "Backup pendente: exporte um JSON em Ferramentas de Dados."
-    : "";
   $("#storage").classList.toggle("saved", storageStatus === "Salvo neste navegador");
 }
 
+function riskCounts() {
+  const counts = new Map();
+  for (const risk of state.risks) {
+    counts.set(risk.linkId, (counts.get(risk.linkId) || 0) + 1);
+  }
+  return counts;
+}
+
 function renderSidebar() {
+  let criticalTotal = 0;
+  let processTotal = 0;
+  for (const risk of state.risks) {
+    if (riskScore(risk) >= MODEL.critical) criticalTotal++;
+    if (risk.linkType === "process") processTotal++;
+  }
+
   const menu = [
-    ["dashboard", "Dashboard Executivo", state.risks.filter(r => riskScore(r) >= MODEL.critical).length],
-    ["processes", "Processos & Serviços", state.risks.filter(r => r.linkType === "process").length],
+    ["dashboard", "Dashboard Executivo", criticalTotal],
+    ["processes", "Processos & Serviços", processTotal],
     ["projects", "Projetos & Iniciativas", state.projects.length],
     ["settings", "Configurações da Unidade", null],
     ["data", "Ferramentas de Dados", null]
@@ -1462,15 +1927,16 @@ function renderSidebar() {
 function renderServiceList() {
   const query = serviceSearch.toLocaleLowerCase("pt-BR");
   const counts = riskCounts();
+  const processTotal = state.risks.filter(r => r.linkType === "process").length;
 
   $("#service-list").innerHTML =
     `<button data-service="">Todos os Processos
-      <span class="count">${state.risks.filter(r => r.linkType === "process").length}</span>
+      <span class="count">${processTotal}</span>
     </button>` +
     state.services.filter(service =>
       service.name.toLocaleLowerCase("pt-BR").includes(query)
-    ).map(service => `<button data-service="${service.id}">
-      <span class="dot" style="background:${service.color}"></span>
+    ).map(service => `<button data-service="${escapeHTML(service.id)}">
+      <span class="dot" style="background:${escapeHTML(service.color)}"></span>
       <span>${escapeHTML(service.name)}</span>
       <span class="count">${counts.get(service.id) || 0}</span>
     </button>`).join("");
@@ -1478,6 +1944,7 @@ function renderServiceList() {
 
 function navigate(nextView, entity = "") {
   view = nextView;
+  visibleLimit = PAGE_SIZE;
   filters = emptyFilters();
   if (view === "processes") filters.kind = "process";
   if (view === "projects") filters.kind = "project";
@@ -1501,17 +1968,7 @@ function filtersHTML(withSearch = false) {
       <label for="risk-search">Buscar riscos</label>
       <input id="risk-search" data-filter="search" type="search"
         value="${escapeHTML(filters.search)}"
-        placeholder="Atividade, risco, causa, consequência ou origem">
-    </div>
-    <div class="sort">
-      <label for="risk-sort">Ordenar por</label>
-      <select id="risk-sort" data-filter="sort">
-        ${options([
-          ["score", "Maior severidade"],
-          ["recent", "Atualizados recentemente"],
-          ["activity", "Atividade (A–Z)"]
-        ], filters.sort)}
-      </select>
+        placeholder="Código, atividade, risco, causa, consequência ou origem">
     </div>` : ""}
     <div><label for="filter-kind">Unidade de análise</label>
       <select id="filter-kind" data-filter="kind" ${view !== "dashboard" ? "disabled" : ""}>
@@ -1533,11 +1990,16 @@ function filtersHTML(withSearch = false) {
         ${options(MODEL.bands.map(b => b.name), filters.severity, "Todas")}
       </select>
     </div>
+    <div><label for="filter-sort">Ordenar por</label>
+      <select id="filter-sort" data-filter="sort">
+        ${options(Object.entries(SORTS).map(([key, item]) => [key, item[0]]), filters.sort)}
+      </select>
+    </div>
     <button data-cmd="clear-filters">Limpar filtros</button>
   </section>`;
 }
 
-/* Renderização com preservação dos rascunhos de ações, detalhes abertos e foco */
+/* RENDERIZAÇÃO COM PRESERVAÇÃO DOS RASCUNHOS DE AÇÕES */
 function render() {
   const drafts = $$("form[data-action-form]").map(form => ({
     riskId: form.dataset.actionForm,
@@ -1551,7 +2013,7 @@ function render() {
   renderHeader();
   renderSidebar();
 
-  const notice = loadMessage ? `<div class="notice">${escapeHTML(loadMessage)}</div>` : "";
+  const notice = noticeHTML();
   const main = $("#main");
 
   if (view === "dashboard") {
@@ -1561,7 +2023,10 @@ function render() {
           <h2>Dashboard Executivo</h2>
           <p>Prioridades, exposição a riscos e execução dos planos.</p>
         </div>
-        <button class="primary" data-cmd="new-risk">+ Novo risco</button>
+        <div class="buttons">
+          <button data-cmd="csv-context">Exportar CSV</button>
+          <button class="primary" data-cmd="new-risk">+ Novo risco</button>
+        </div>
       </div>${filtersHTML()}<div id="results"></div>`;
     renderResults();
   } else if (view === "processes" || view === "projects") {
@@ -1576,6 +2041,7 @@ function render() {
           <button data-cmd="${projects ? "new-project" : "new-service"}">
             + ${projects ? "Novo projeto" : "Novo serviço"}
           </button>
+          <button data-cmd="csv-context">Exportar CSV</button>
           <button class="primary" data-cmd="new-risk">+ Novo risco</button>
         </div>
       </div><div id="entities"></div>${filtersHTML(true)}<div id="results"></div>`;
@@ -1617,38 +2083,19 @@ function renderResults() {
   if (view === "dashboard") {
     target.innerHTML = dashboardHTML(risks);
   } else {
+    const shown = risks.slice(0, visibleLimit);
+    const remaining = risks.length - shown.length;
+
     target.innerHTML = `<h3>${numberBR(risks.length)} risco(s) no contexto</h3>
       <div class="risk-list">${risks.length
-        ? risks.map(riskCard).join("")
+        ? shown.map(riskCard).join("")
         : emptyMessage("Nenhum risco encontrado. Cadastre um risco ou ajuste os filtros.")}
-      </div>`;
+      </div>
+      ${remaining > 0 ? `<div class="load-more">
+        <p class="help">Exibindo ${shown.length} de ${risks.length} riscos.</p>
+        <button data-cmd="more">Mostrar mais ${Math.min(PAGE_SIZE, remaining)}</button>
+      </div>` : ""}`;
   }
-}
-
-function heatMapHTML(risks) {
-  const rows = [5, 4, 3, 2, 1].map(p => {
-    const cells = [1, 2, 3, 4, 5].map(i => {
-      const count = risks.filter(r => r.probability === p && r.impact === i).length;
-      const band = bandOfScore(p * i);
-      return `<td><button class="heat-cell ${band.css}${count ? "" : " zero"}"
-        data-drill="cell" data-value="${p}-${i}"
-        aria-label="Probabilidade ${p}, impacto ${i}, nível ${band.name}: ${count} risco(s)">${count}</button></td>`;
-    }).join("");
-
-    return `<tr><th scope="row">${p}<span class="lbl"> · ${MODEL.probability[p - 1]}</span></th>${cells}</tr>`;
-  }).join("");
-
-  return `<section class="panel" style="margin-bottom:20px">
-    <h3>Matriz de calor · probabilidade × impacto</h3>
-    <div class="table-wrap"><table class="heat">
-      <caption>Linhas: probabilidade. Colunas: impacto. Cada célula mostra a quantidade de riscos; selecione para ver o detalhamento.</caption>
-      <thead><tr><th scope="col"><span class="lbl">Prob. ↓ · Impacto →</span></th>
-        ${MODEL.impact.map((label, i) =>
-          `<th scope="col">${i + 1}<span class="lbl"><br>${label}</span></th>`).join("")}
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table></div>
-  </section>`;
 }
 
 function dashboardHTML(risks) {
@@ -1657,7 +2104,6 @@ function dashboardHTML(risks) {
   const critical = risks.filter(risk => riskScore(risk) >= MODEL.critical);
   const noAction = critical.filter(risk => !risk.actions.length);
   const overdue = actions.filter(row => isLate(row.action));
-  const soon = actions.filter(row => isSoon(row.action));
   const rate = actions.length ? Math.round(completed.length / actions.length * 100) : 0;
 
   const metric = (key, label, value, hint, css = "") =>
@@ -1695,14 +2141,11 @@ function dashboardHTML(risks) {
             <span>${status}</span>
             <strong>${actions.filter(row => row.action.status === status).length}</strong>
           </button>`).join("")}
-          <button class="mini" data-drill="soon">
-            <span>Vencem em ${MODEL.soonDays} dias</span><strong>${soon.length}</strong>
-          </button>
         </div>
       </section>
     </div>
 
-    ${heatMapHTML(risks)}
+    ${heatmapHTML(risks)}
 
     <section class="panel">
       <div class="row"><h3>Riscos de alta severidade</h3>
@@ -1712,15 +2155,17 @@ function dashboardHTML(risks) {
         <div class="table-wrap"><table>
           <thead><tr><th>Nível</th><th>Origem e atividade</th>
             <th>Risco e consequência</th><th>Detalhes</th></tr></thead>
-          <tbody>${[...critical].sort(SORTERS.score).map(risk =>
+          <tbody>${[...critical].sort((a, b) => riskScore(b) - riskScore(a)).map(risk =>
             `<tr>
               <td><span class="badge ${riskBand(risk).css}">
-                ${riskScore(risk)} · ${riskBand(risk).name}</span></td>
+                ${riskScore(risk)} · ${riskBand(risk).name}</span>
+                ${residualScore(risk) !== null
+                  ? `<p class="muted">Residual: ${residualScore(risk)} · ${bandFor(residualScore(risk)).name}</p>` : ""}</td>
               <td><strong>${escapeHTML(sourceOf(risk).name)}</strong>
-                <p class="muted">${escapeHTML(risk.activity)}</p></td>
+                <p class="muted"><span class="code">${riskCode(risk)}</span>${escapeHTML(risk.activity)}</p></td>
               <td><p><strong>Risco:</strong> ${escapeHTML(riskDescription(risk.description))}</p>
                 <p><strong>Consequência:</strong> ${escapeHTML(risk.consequence)}</p></td>
-              <td><button class="small" data-goto="${risk.id}">Ver Risco</button></td>
+              <td><button class="small" data-goto="${escapeHTML(risk.id)}">Ver Risco</button></td>
             </tr>`).join("")}
           </tbody>
         </table></div>` : `<p class="muted">Nenhum risco alto ou extremo no contexto filtrado.</p>`}
@@ -1741,9 +2186,67 @@ function dashboardHTML(risks) {
       Os indicadores e detalhamentos respeitam os filtros ativos.</p>`;
 }
 
+function heatmapHTML(risks) {
+  const residual = heatMode === "residual";
+  const grid = new Map();
+  let assessed = 0;
+
+  for (const risk of risks) {
+    const p = residual ? risk.residualProbability : risk.probability;
+    const i = residual ? risk.residualImpact : risk.impact;
+    if (!p || !i) continue;
+    assessed++;
+    grid.set(p + "-" + i, (grid.get(p + "-" + i) || 0) + 1);
+  }
+
+  const residualCount = risks.filter(risk => residualScore(risk) !== null).length;
+  const rows = [5, 4, 3, 2, 1].map(impact => {
+    const cells = [1, 2, 3, 4, 5].map(probability => {
+      const count = grid.get(probability + "-" + impact) || 0;
+      const score = probability * impact;
+      const band = bandFor(score);
+      const label = "Probabilidade " + probability + " (" + MODEL.probability[probability - 1] +
+        "), impacto " + impact + " (" + MODEL.impact[impact - 1] + "): " +
+        (count === 1 ? "1 risco" : count + " riscos") + ", nível " + score + " " + band.name;
+
+      return `<button class="heat-cell ${band.css}${count ? "" : " zero"}"
+        data-drill="cell" data-value="${heatMode}:${probability}-${impact}"
+        aria-label="${escapeHTML(label)}">
+        <strong>${count || "–"}</strong><small>${score}</small></button>`;
+    }).join("");
+
+    return `<div class="heat-axis">${impact} · ${escapeHTML(MODEL.impact[impact - 1])}</div>${cells}`;
+  }).join("");
+
+  const columns = [1, 2, 3, 4, 5].map(probability =>
+    `<div class="heat-axis x">${probability} · ${escapeHTML(MODEL.probability[probability - 1])}</div>`
+  ).join("");
+
+  return `<section class="panel heat-panel" aria-label="Matriz de calor">
+    <div class="row">
+      <h3>Matriz de calor · probabilidade × impacto</h3>
+      <div>
+        <label for="heat-mode">Exibir</label>
+        <select id="heat-mode" data-heatmode>
+          ${options([
+            ["inherent", "Risco inerente"],
+            ["residual", "Risco residual (" + residualCount + " avaliado(s))"]
+          ], heatMode)}
+        </select>
+      </div>
+    </div>
+    <div class="heatmap" role="group" aria-label="Matriz 5 por 5 de probabilidade e impacto">
+      ${rows}<div></div>${columns}
+    </div>
+    <p class="help">Eixo vertical: impacto. Eixo horizontal: probabilidade. O número maior é a
+      quantidade de riscos; o menor, o nível da célula. Clique em uma célula para ver os riscos.
+      ${residual && !assessed ? "Nenhum risco do contexto tem avaliação residual." : ""}</p>
+  </section>`;
+}
+
 function renderEntities() {
-  const projects = view === "projects";
   const counts = riskCounts();
+  const projects = view === "projects";
   const list = (projects ? state.projects : state.services)
     .filter(item => !filters.entity || item.id === filters.entity);
 
@@ -1751,19 +2254,19 @@ function renderEntities() {
     const count = counts.get(item.id) || 0;
     return `<article class="panel">
       <div class="row"><h3>
-        ${!projects ? `<span class="dot" style="background:${item.color}"></span> ` : ""}
+        ${!projects ? `<span class="dot" style="background:${escapeHTML(item.color)}"></span> ` : ""}
         ${escapeHTML(item.name)}</h3>
-        ${projects ? `<span class="badge neutral">${item.status}</span>` : ""}
+        ${projects ? `<span class="badge neutral">${escapeHTML(item.status)}</span>` : ""}
       </div>
       ${projects ? `<p>${escapeHTML(item.description)}</p>
         <p class="muted">Responsável: ${escapeHTML(item.owner)}<br>
         ${dateBR(item.start)} → ${dateBR(item.end)}</p>` : ""}
       <div class="row">
-        <button class="small" data-entity="${item.id}">${count} risco(s) · visualizar</button>
+        <button class="small" data-entity="${escapeHTML(item.id)}">${count} risco(s) · visualizar</button>
         <div class="buttons">
-          <button class="small" data-edit-entity="${item.id}"
+          <button class="small" data-edit-entity="${escapeHTML(item.id)}"
             data-kind="${projects ? "project" : "process"}">Editar</button>
-          <button class="small danger" data-delete-entity="${item.id}"
+          <button class="small danger" data-delete-entity="${escapeHTML(item.id)}"
             data-kind="${projects ? "project" : "process"}">Excluir</button>
         </div>
       </div>
@@ -1776,34 +2279,52 @@ function renderEntities() {
 }
 
 function scaleInput(risk, key, label) {
-  return `<div><label for="${key}-${risk.id}">${label}</label>
-    <select id="${key}-${risk.id}" data-scale="${key}" data-risk="${risk.id}">
-      ${options(scaleOptions(key), risk[key])}
+  return `<div><label for="${key}-${escapeHTML(risk.id)}">${label}</label>
+    <select id="${key}-${escapeHTML(risk.id)}" data-scale="${key}" data-risk="${escapeHTML(risk.id)}">
+      ${options(MODEL[key].map((label, i) => [i + 1, (i + 1) + " · " + label]), risk[key])}
     </select></div>`;
+}
+
+function residualInput(risk, key, label, modelKey) {
+  const id = escapeHTML(risk.id);
+  return `<div><label for="${key}-${id}">${label}</label>
+    <select id="${key}-${id}" data-scale="${key}" data-risk="${id}">
+      ${options(MODEL[modelKey].map((text, i) => [i + 1, (i + 1) + " · " + text]),
+        risk[key] ?? "", "Não avaliado")}
+    </select></div>`;
+}
+
+function residualBadge(risk) {
+  const score = residualScore(risk);
+  if (score === null) {
+    return '<div class="score neutral" aria-live="polite">Residual não avaliado</div>';
+  }
+  const band = bandFor(score);
+  return `<div class="score ${band.css}" aria-live="polite">Residual: ${score} · ${band.name}</div>`;
 }
 
 function riskCard(risk) {
   const band = riskBand(risk);
-  return `<article class="risk-card" id="risk-${risk.id}" tabindex="-1"
+  return `<article class="risk-card" id="risk-${escapeHTML(risk.id)}" tabindex="-1"
       style="border-left-color:${band.color}">
     <div class="row">
       <span class="badge neutral">
         ${risk.linkType === "process" ? "Processo" : "Projeto"} · ${escapeHTML(sourceOf(risk).name)}
       </span>
       <div class="buttons">
-        <button class="small" data-edit-risk="${risk.id}">Editar risco</button>
-        <button class="small danger" data-delete-risk="${risk.id}">Excluir risco</button>
+        <button class="small" data-edit-risk="${escapeHTML(risk.id)}">Editar risco</button>
+        <button class="small danger" data-delete-risk="${escapeHTML(risk.id)}">Excluir risco</button>
       </div>
     </div>
 
-    <h3>${escapeHTML(risk.activity)}</h3>
+    <h3><span class="code">${riskCode(risk)}</span>${escapeHTML(risk.activity)}</h3>
     <p><strong>Risco:</strong> ${escapeHTML(riskDescription(risk.description))}</p>
     <p><strong>Causa provável:</strong> ${escapeHTML(risk.cause)}</p>
     <p class="consequence"><strong>Dano ou consequência:</strong> ${escapeHTML(risk.consequence)}</p>
 
     <div class="risk-meta">
-      <span class="badge neutral">${risk.typology}</span>
-      <span class="badge neutral">Tratamento: ${risk.treatment}</span>
+      <span class="badge neutral">${escapeHTML(risk.typology)}</span>
+      <span class="badge neutral">Tratamento: ${escapeHTML(risk.treatment)}</span>
     </div>
 
     <div class="score-row">
@@ -1812,10 +2333,16 @@ function riskCard(risk) {
       <div class="score ${band.css}" aria-live="polite">${riskScore(risk)} · ${band.name}</div>
     </div>
 
-    <p class="metadata">${escapeHTML(risk.id)} · Criado em ${dateTimeBR(risk.createdAt)}
+    <div class="score-row residual">
+      ${residualInput(risk, "residualProbability", "Probabilidade residual", "probability")}
+      ${residualInput(risk, "residualImpact", "Impacto residual", "impact")}
+      ${residualBadge(risk)}
+    </div>
+
+    <p class="metadata">${riskCode(risk)} · Criado em ${dateTimeBR(risk.createdAt)}
       · Atualizado em ${dateTimeBR(risk.updatedAt)}</p>
 
-    <details class="plan" id="plan-${risk.id}">
+    <details class="plan" id="plan-${escapeHTML(risk.id)}">
       <summary>Plano de Ações e Execução · ${risk.actions.length} ação(ões)</summary>
       ${actionsHTML(risk)}
       ${newActionForm(risk)}
@@ -1831,25 +2358,24 @@ function actionsHTML(risk) {
     <progress value="${percent}" max="100" aria-label="Progresso do plano"></progress>
     <span>${percent}% · ${completed}/${risk.actions.length} concluídas</span>
   </div>` + (risk.actions.length ? risk.actions.map(action =>
-    `<div class="action-item" id="action-${action.id}" tabindex="-1">
+    `<div class="action-item" id="action-${escapeHTML(action.id)}" tabindex="-1">
       <p><strong>${escapeHTML(action.description)}</strong></p>
       <p class="muted">${escapeHTML(action.owner)} · Prazo: ${dateBR(action.due)}</p>
       ${isLate(action) ? '<p class="overdue">Atrasada · prazo vencido</p>' : ""}
-      ${isSoon(action) ? `<p class="soon">Vence em até ${MODEL.soonDays} dias</p>` : ""}
       <div class="buttons">
-        <label for="status-${action.id}">Status</label>
-        <select id="status-${action.id}" data-action-status="${action.id}" data-risk="${risk.id}">
+        <label for="status-${escapeHTML(action.id)}">Status</label>
+        <select id="status-${escapeHTML(action.id)}" data-action-status="${escapeHTML(action.id)}" data-risk="${escapeHTML(risk.id)}">
           ${options(MODEL.actionStatuses, action.status)}
         </select>
-        <button class="small" data-edit-action="${action.id}" data-risk="${risk.id}">Editar ação</button>
-        <button class="small danger" data-delete-action="${action.id}" data-risk="${risk.id}">Remover ação</button>
+        <button class="small" data-edit-action="${escapeHTML(action.id)}" data-risk="${escapeHTML(risk.id)}">Editar ação</button>
+        <button class="small danger" data-delete-action="${escapeHTML(action.id)}" data-risk="${escapeHTML(risk.id)}">Remover ação</button>
       </div>
     </div>`).join("") : '<p class="muted">Nenhuma ação cadastrada</p>');
 }
 
 function newActionForm(risk) {
   const prefix = "add-" + risk.id;
-  return `<form class="action-form" data-action-form="${risk.id}" novalidate>
+  return `<form class="action-form" data-action-form="${escapeHTML(risk.id)}" novalidate>
     <h4 style="margin:0 0 14px">Adicionar ação</h4>
     <div class="form-grid">
       ${field("description", "Descrição da ação", "", "textarea", true, prefix)}
@@ -1861,9 +2387,7 @@ function newActionForm(risk) {
   </form>`;
 }
 
-/* =====================================================================
-   9. MODAIS E FORMULÁRIOS
-   ===================================================================== */
+/* MODAIS E FORMULÁRIOS */
 function openModal(title, html) {
   const dialog = $("#modal");
   if (!dialog.open) modalOpener = document.activeElement;
@@ -2054,47 +2578,36 @@ function entityForm(kind, id = "") {
 
 function deleteEntity(kind, id) {
   const list = kind === "project" ? state.projects : state.services;
-  const item = list.find(entry => entry.id === id);
+  const item = list.find(item => item.id === id);
   const linked = state.risks.filter(risk => risk.linkId === id);
-  const alternatives = list.filter(entry => entry.id !== id);
+  const alternatives = list.filter(item => item.id !== id);
 
   confirmModal(
     "Excluir " + (kind === "project" ? "projeto" : "serviço"),
     linked.length
-      ? `“${item.name}” possui ${linked.length} risco(s). Transfira-os para outro destino ou exclua-os junto com o registro.`
+      ? `“${item.name}” possui ${linked.length} risco(s). Selecione outro destino para transferi-los antes da exclusão. Se não houver destino, cancele e cadastre um primeiro.`
       : `Excluir “${item.name}”?`,
     () => {
       const target = $("#transfer-target")?.value;
       if (linked.length && !target) return;
 
-      const before = snapshot();
-      const removeRisks = target === DELETE_WITH_RISKS;
+      const snapshot = snapshotState();
 
-      if (removeRisks) {
-        state.risks = state.risks.filter(risk => risk.linkId !== id);
-      } else {
-        linked.forEach(risk => {
-          risk.linkId = target;
-          risk.updatedAt = now();
-        });
-      }
+      linked.forEach(risk => {
+        risk.linkId = target;
+        risk.updatedAt = now();
+      });
 
-      list.splice(list.findIndex(entry => entry.id === id), 1);
+      list.splice(list.findIndex(item => item.id === id), 1);
       if (filters.entity === id) filters.entity = "";
-
-      commit(removeRisks
-        ? "Registro e riscos vinculados excluídos."
-        : "Registro excluído. Vínculos preservados.", null, undoTo(before));
+      commit("Registro excluído. Vínculos preservados.", null, undoer(snapshot));
       closeModal();
       render();
     },
-    linked.length ? "Confirmar e excluir" : "Excluir",
-    linked.length ? `<label for="transfer-target">Destino dos riscos</label>
+    linked.length ? "Transferir e excluir" : "Excluir",
+    linked.length ? `<label for="transfer-target">Transferir riscos para</label>
       <select id="transfer-target">
-        ${options([
-          ...alternatives.map(entry => [entry.id, "Transferir para: " + entry.name]),
-          [DELETE_WITH_RISKS, "Excluir também os riscos vinculados"]
-        ], "", "Selecione uma opção")}
+        ${options(alternatives.map(item => [item.id, item.name]), "", "Selecione um destino")}
       </select>` : ""
   );
 
@@ -2107,7 +2620,7 @@ function deleteEntity(kind, id) {
 }
 
 function riskForm(id = "") {
-  const existing = findRisk(id);
+  const existing = state.risks.find(risk => risk.id === id);
   const selectedProject = state.projects.some(item => item.id === filters.entity);
   const selectedService = state.services.some(item => item.id === filters.entity);
 
@@ -2121,7 +2634,8 @@ function riskForm(id = "") {
     activity: "", description: "", cause: "", consequence: "",
     typology: MODEL.types[0],
     treatment: MODEL.treatments[0],
-    probability: 1, impact: 1
+    probability: 1, impact: 1,
+    residualProbability: null, residualImpact: null
   };
 
   openModal(existing ? "Editar risco" : "Cadastrar risco", `
@@ -2143,8 +2657,16 @@ function riskForm(id = "") {
         ${field("consequence", "Dano ou consequência", risk.consequence, "textarea", true)}
         ${selectField("typology", "Tipologia", MODEL.types, risk.typology)}
         ${selectField("treatment", "Estratégia de tratamento", MODEL.treatments, risk.treatment)}
-        ${selectField("probability", "Probabilidade", scaleOptions("probability"), risk.probability)}
-        ${selectField("impact", "Impacto", scaleOptions("impact"), risk.impact)}
+        ${selectField("probability", "Probabilidade",
+          MODEL.probability.map((label, i) => [i + 1, (i + 1) + " · " + label]), risk.probability)}
+        ${selectField("impact", "Impacto",
+          MODEL.impact.map((label, i) => [i + 1, (i + 1) + " · " + label]), risk.impact)}
+        ${selectField("residualProbability", "Probabilidade residual (após tratamento)",
+          MODEL.probability.map((label, i) => [i + 1, (i + 1) + " · " + label]),
+          risk.residualProbability ?? "", "f", false, "Não avaliado")}
+        ${selectField("residualImpact", "Impacto residual (após tratamento)",
+          MODEL.impact.map((label, i) => [i + 1, (i + 1) + " · " + label]),
+          risk.residualImpact ?? "", "f", false, "Não avaliado")}
         <p class="full badge neutral" id="form-score" aria-live="polite"></p>
       </div>
       <div class="form-footer">
@@ -2173,8 +2695,12 @@ function riskForm(id = "") {
   }
 
   function updatePreview() {
-    const score = Number(get("probability").value) * Number(get("impact").value);
-    $("#form-score").textContent = "Nível calculado: " + score + " · " + bandOfScore(score).name;
+    const value = { probability: +get("probability").value, impact: +get("impact").value };
+    let text = "Nível calculado: " + riskScore(value) + " · " + riskBand(value).name;
+    const rp = +get("residualProbability").value;
+    const ri = +get("residualImpact").value;
+    if (rp && ri) text += " · Residual: " + rp * ri + " · " + bandFor(rp * ri).name;
+    $("#form-score").textContent = text;
   }
 
   populateSources();
@@ -2182,6 +2708,8 @@ function riskForm(id = "") {
   get("linkType").onchange = populateSources;
   get("probability").onchange = updatePreview;
   get("impact").onchange = updatePreview;
+  get("residualProbability").onchange = updatePreview;
+  get("residualImpact").onchange = updatePreview;
 
   form.onsubmit = event => {
     event.preventDefault();
@@ -2191,6 +2719,15 @@ function riskForm(id = "") {
     values.probability = Number(values.probability);
     values.impact = Number(values.impact);
     values.description = riskDescription(values.description);
+    values.residualProbability = values.residualProbability ? Number(values.residualProbability) : null;
+    values.residualImpact = values.residualImpact ? Number(values.residualImpact) : null;
+
+    if ((values.residualProbability === null) !== (values.residualImpact === null)) {
+      const missing = values.residualProbability === null ? "residualProbability" : "residualImpact";
+      setFieldError(get(missing), "Informe também o valor residual correspondente ou deixe ambos como “Não avaliado”.");
+      get(missing).focus();
+      return;
+    }
 
     const list = values.linkType === "process" ? state.services : state.projects;
     if (!list.some(item => item.id === values.linkId)) {
@@ -2210,8 +2747,8 @@ function riskForm(id = "") {
 
     if (existing) Object.assign(existing, values, { updatedAt: stamp });
     else state.risks.push({
-      id: savedId, ...values, createdAt: stamp, updatedAt: stamp,
-      actions: [], demo: false
+      id: savedId, number: state.nextRiskNumber++, ...values,
+      createdAt: stamp, updatedAt: stamp, actions: [], demo: false
     });
 
     commit("Risco salvo.");
@@ -2221,7 +2758,7 @@ function riskForm(id = "") {
 }
 
 function editAction(riskId, actionId) {
-  const risk = findRisk(riskId);
+  const risk = state.risks.find(item => item.id === riskId);
   const action = risk.actions.find(item => item.id === actionId);
 
   openModal("Editar ação", `<form id="action-edit" novalidate>
@@ -2254,9 +2791,7 @@ function editAction(riskId, actionId) {
   };
 }
 
-/* =====================================================================
-   10. DETALHAMENTOS E NAVEGAÇÃO ATÉ UM RISCO
-   ===================================================================== */
+/* DETALHAMENTOS */
 function drill(key, value = "") {
   const risks = selectedRisks();
   const actions = actionRows(risks);
@@ -2286,9 +2821,14 @@ function drill(key, value = "") {
       items = risks.filter(risk => risk.typology === value);
       break;
     case "cell": {
-      const [p, i] = value.split("-").map(Number);
-      title = `Probabilidade ${p} · Impacto ${i}`;
-      items = risks.filter(risk => risk.probability === p && risk.impact === i);
+      const [mode, cell] = value.split(":");
+      const [p, i] = cell.split("-").map(Number);
+      const residual = mode === "residual";
+      title = "Matriz " + (residual ? "residual" : "inerente") +
+        " · probabilidade " + p + " × impacto " + i;
+      items = risks.filter(risk => residual
+        ? risk.residualProbability === p && risk.residualImpact === i
+        : risk.probability === p && risk.impact === i);
       break;
     }
     case "actions":
@@ -2304,11 +2844,6 @@ function drill(key, value = "") {
     case "overdue":
       title = "Ações Atrasadas";
       items = actions.filter(item => isLate(item.action));
-      isAction = true;
-      break;
-    case "soon":
-      title = `Ações com prazo nos próximos ${MODEL.soonDays} dias`;
-      items = actions.filter(item => isSoon(item.action));
       isAction = true;
       break;
     case "status":
@@ -2327,26 +2862,32 @@ function drill(key, value = "") {
       const action = isAction ? item.action : null;
       return `<article class="detail-item">
         <span class="badge ${riskBand(risk).css}">${riskScore(risk)} · ${riskBand(risk).name}</span>
-        <h3>${escapeHTML(action ? action.description : risk.activity)}</h3>
+        <h3>${action ? "" : `<span class="code">${riskCode(risk)}</span>`}${escapeHTML(action ? action.description : risk.activity)}</h3>
         <p class="muted">${escapeHTML(sourceOf(risk).name)}</p>
         <p>${action
-          ? `${escapeHTML(action.owner)} · ${dateBR(action.due)} · ${action.status}${isLate(action) ? " · Atrasada" : ""}`
+          ? `${escapeHTML(action.owner)} · ${dateBR(action.due)} · ${escapeHTML(action.status)}${isLate(action) ? " · Atrasada" : ""}`
           : "Risco: " + escapeHTML(riskDescription(risk.description))}</p>
-        <button data-goto="${risk.id}" ${action ? `data-action="${action.id}"` : ""}>Ver no Painel</button>
+        <button data-goto="${escapeHTML(risk.id)}" ${action ? `data-action="${escapeHTML(action.id)}"` : ""}>Ver no Painel</button>
       </article>`;
     }).join("") : '<p class="empty">Nenhum registro encontrado neste contexto.</p>'}</div>`);
 }
 
 function goToRisk(id, actionId = "") {
-  const risk = findRisk(id);
+  const risk = state.risks.find(item => item.id === id);
   if (!risk) return;
 
   closeModal();
   navigate(risk.linkType === "process" ? "processes" : "projects", risk.linkId);
 
+  const position = selectedRisks().findIndex(item => item.id === id);
+  if (position >= visibleLimit) {
+    visibleLimit = position + 1;
+    renderResults();
+  }
+
   if (actionId) $("#plan-" + id).open = true;
 
-  setTimeout(() => {
+  requestAnimationFrame(() => {
     const target = document.getElementById(actionId ? "action-" + actionId : "risk-" + id);
     if (!target) return;
     target.focus({ preventScroll: true });
@@ -2356,12 +2897,10 @@ function goToRisk(id, actionId = "") {
     });
     target.classList.add("highlight");
     setTimeout(() => target.classList.remove("highlight"), 3500);
-  }, 50);
+  });
 }
 
-/* =====================================================================
-   11. CONFIGURAÇÕES
-   ===================================================================== */
+/* CONFIGURAÇÕES */
 function renderSettings() {
   $("#main").innerHTML = `
     <div class="heading"><div>
@@ -2389,8 +2928,8 @@ function renderSettings() {
       <div class="buttons">${MODEL.bands.map(band =>
         `<span class="badge ${band.css}">${band.name}: ${band.min}–${band.max}</span>`
       ).join("")}</div>
-      <p><strong>Probabilidade:</strong> ${scaleOptions("probability").map(([, label]) => label).join("; ")}.</p>
-      <p><strong>Impacto:</strong> ${scaleOptions("impact").map(([, label]) => label).join("; ")}.</p>
+      <p><strong>Probabilidade:</strong> ${MODEL.probability.map((label, i) => (i + 1) + " · " + label).join("; ")}.</p>
+      <p><strong>Impacto:</strong> ${MODEL.impact.map((label, i) => (i + 1) + " · " + label).join("; ")}.</p>
       <p><strong>Tipologias:</strong> ${MODEL.types.join(", ")}.</p>
       <p><strong>Tratamentos:</strong> ${MODEL.treatments.join(", ")}.</p>
       <p class="help">Este modelo não é apresentado como metodologia oficial da AGU. A aplicação institucional depende de validação e documentação da unidade.</p>
@@ -2414,88 +2953,42 @@ function renderSettings() {
   };
 }
 
-/* =====================================================================
-   12. IMPORTAÇÃO E EXPORTAÇÃO
-   ===================================================================== */
-function downloadFile(name, content, type) {
-  const blob = new Blob([content], { type });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = name;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 10000);
-}
-
-function fileStem() {
-  const acronym = (state.unit.acronym || "UNIDADE")
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9_-]/g, "_");
-  return `riscos-${acronym}-${localDate()}`;
-}
-
-function markExported() {
-  lastExport = now();
-  try { localStorage.setItem(EXPORT_KEY, lastExport); } catch {}
-  renderHeader();
-}
-
+/* IMPORTAÇÃO E EXPORTAÇÃO */
 function exportBackup() {
-  const data = { ...state, exportedAt: now() };
-  downloadFile(fileStem() + ".json", JSON.stringify(data, null, 2),
-    "application/json;charset=utf-8");
-  markExported();
+  downloadFile(`riscos-${fileSlug(state.unit)}-${localDate()}.json`,
+    backupJSON(state, now()), "application/json;charset=utf-8");
   toast("Backup JSON gerado.");
-  if ($("#main .tools")) renderData();
 }
 
-/* CSV para Excel: separador ";", BOM UTF-8 e proteção contra injeção de fórmulas. */
-function csvCell(value) {
-  let text = String(value ?? "");
-  if (/^[=+\-@\t\r]/.test(text)) text = "'" + text;
-  return '"' + text.replace(/"/g, '""') + '"';
+function exportCSV(kind, risks) {
+  const { content, count } = buildCSV(kind, risks, risk => sourceOf(risk).name);
+  downloadFile(`${kind === "actions" ? "acoes" : "riscos"}-${fileSlug(state.unit)}-${localDate()}.csv`,
+    content, "text/csv;charset=utf-8");
+  toast("CSV gerado com " + count + " linha(s).");
 }
 
-function exportCSV() {
-  const header = [
-    "Tipo de origem", "Origem", "Atividade", "Risco", "Causa provável",
-    "Dano ou consequência", "Tipologia", "Tratamento", "Probabilidade",
-    "Impacto", "Pontuação", "Severidade", "Ação", "Responsável pela ação",
-    "Prazo da ação", "Status da ação", "Ação atrasada"
-  ];
+const formatBytes = value => value === null || value === undefined ? "n/d"
+  : value >= 1048576 ? (value / 1048576).toFixed(1).replace(".", ",") + " MB"
+  : Math.max(1, Math.round(value / 1024)) + " KB";
 
-  const rows = [];
+async function fillStorageDetails() {
+  const info = await storageInfo();
+  const target = $("#storage-details");
+  if (!target) return;
 
-  for (const risk of [...state.risks].sort(SORTERS.score)) {
-    const base = [
-      risk.linkType === "process" ? "Processo" : "Projeto",
-      sourceOf(risk).name, risk.activity, riskDescription(risk.description),
-      risk.cause, risk.consequence, risk.typology, risk.treatment,
-      risk.probability, risk.impact, riskScore(risk), riskBand(risk).name
-    ];
+  const names = { idb: "IndexedDB", localstorage: "localStorage (modo compatível)", memory: "somente memória" };
+  target.textContent = "Armazenamento: " + names[info.backend] +
+    " · Uso: " + formatBytes(info.usage) + (info.quota ? " de " + formatBytes(info.quota) : "") +
+    (info.persistent === true ? " · persistente"
+      : info.persistent === false ? " · o navegador pode limpar se faltar espaço" : "");
 
-    if (!risk.actions.length) rows.push([...base, "", "", "", "", ""]);
-    else for (const action of risk.actions) {
-      rows.push([
-        ...base, action.description, action.owner, dateBR(action.due),
-        action.status, isLate(action) ? "Sim" : "Não"
-      ]);
-    }
-  }
-
-  const csv = "\ufeff" + [header, ...rows]
-    .map(row => row.map(csvCell).join(";")).join("\r\n");
-
-  downloadFile(fileStem() + ".csv", csv, "text/csv;charset=utf-8");
-  toast("Planilha CSV gerada (" + rows.length + " linha(s)).");
+  const legacy = $("#clear-legacy");
+  if (legacy) legacy.hidden = !info.legacy;
 }
 
 function renderData() {
   $("#main").innerHTML = `
-    ${loadMessage ? `<div class="notice">${escapeHTML(loadMessage)}</div>` : ""}
+    ${noticeHTML()}
     <div class="heading"><div>
       <div class="eyebrow">Preservação dos registros</div>
       <h2>Ferramentas de Dados</h2>
@@ -2507,35 +3000,37 @@ function renderData() {
         <h3>Backup e restauração</h3>
         <p>O salvamento automático depende deste navegador e pode ficar indisponível ou ser apagado.
           O backup JSON é necessário para transportar e preservar os dados.</p>
-        <p><strong>Último backup:</strong> ${lastExport ? dateTimeBR(lastExport) : "nunca exportado"}
-          ${backupPending() ? '<span class="backup-warn"> · há alterações posteriores</span>' : ""}</p>
         <div class="buttons">
           <button class="primary" data-cmd="export">Exportar Backup JSON</button>
           <button data-cmd="import">Importar JSON</button>
           <input type="file" id="import-file" accept=".json,application/json" hidden>
         </div>
         <p class="help">A importação substitui a base após validação e confirmação.
-          Limite de arquivo: 20 MB. Versão do esquema: ${SCHEMA_VERSION}.</p>
+          Limite de arquivo: ${importLimitMb()} MB. Versão do esquema: ${SCHEMA_VERSION}.</p>
         <p id="import-feedback" class="field-error" role="status"></p>
       </section>
 
       <section class="panel">
-        <h3>Planilha (CSV)</h3>
-        <p>Exporta todos os riscos, um por linha de ação, para abrir no Excel ou em outra planilha.
-          Serve para análise; para restaurar dados use o backup JSON.</p>
-        <button data-cmd="export-csv">Exportar CSV</button>
+        <h3>Planilhas (CSV)</h3>
+        <p>Abra no Excel ou em outra planilha. Os arquivos usam separador ponto e vírgula e acentuação correta.</p>
+        <div class="buttons">
+          <button data-cmd="csv-risks">Exportar riscos (CSV)</button>
+          <button data-cmd="csv-actions">Exportar ações (CSV)</button>
+        </div>
       </section>
 
       <section class="panel">
         <h3>Armazenamento atual</h3>
         <p><strong>${escapeHTML(storageStatus)}</strong><br>
-          Última alteração: ${dateTimeBR(state.lastModified)}</p>
-        <button data-cmd="retry-save" ${storageBlocked ? "disabled" : ""}>
-          Tentar salvar neste navegador
-        </button>
-        <p class="help">Esta versão não oferece sincronização, colaboração simultânea ou controle de acesso.
-          Alterações feitas em outra aba do mesmo navegador são acompanhadas automaticamente.
-          A conexão com SharePoint não está configurada.</p>
+          Última alteração: ${dateTimeBR(state.lastModified)}<br>
+          <span id="storage-details">Calculando uso…</span></p>
+        <div class="buttons">
+          <button data-cmd="retry-save" ${storageBlocked ? "disabled" : ""}>Tentar salvar novamente</button>
+          <button data-cmd="clear-legacy" id="clear-legacy" hidden>Apagar cópia antiga (localStorage)</button>
+        </div>
+        <p class="help">Os dados ficam em um banco do próprio navegador (IndexedDB), sem o limite de ~5 MB
+          do localStorage. Esta versão não oferece sincronização entre pessoas nem controle de acesso.
+          Se a base for alterada em outra aba, o salvamento é pausado aqui até recarregar a página.</p>
       </section>
 
       <section class="panel">
@@ -2550,11 +3045,15 @@ function renderData() {
     if (file) importBackup(file);
     event.target.value = "";
   };
+
+  fillStorageDetails();
 }
 
 async function importBackup(file) {
   try {
-    if (file.size > 20 * 1024 * 1024) throw new Error("Arquivo acima do limite de 20 MB.");
+    if (file.size > importLimitMb() * 1024 * 1024) {
+      throw new Error("Arquivo acima do limite de " + importLimitMb() + " MB.");
+    }
 
     let raw;
     try { raw = JSON.parse(await file.text()); }
@@ -2581,12 +3080,11 @@ async function importBackup(file) {
 
     $("#export-before-import").onclick = exportBackup;
     $("#apply-import").onclick = () => {
-      const before = snapshot();
       state = next;
       storageBlocked = false;
+      staleData = false;
       loadMessage = "";
-      commit("Backup importado.", null, undoTo(before));
-      markExported();
+      commit("Backup importado.", null, null, { force: true });
       closeModal();
       navigate("dashboard");
     };
@@ -2598,9 +3096,7 @@ async function importBackup(file) {
   }
 }
 
-/* =====================================================================
-   13. PDF
-   ===================================================================== */
+/* PDF */
 function reportContext(scope) {
   if (scope === "all") return "Todos os riscos cadastrados.";
   const source = [...state.services, ...state.projects].find(item => item.id === filters.entity);
@@ -2616,7 +3112,7 @@ function reportContext(scope) {
 
 function buildReport(settings) {
   const risks = (settings.scope === "filtered" ? selectedRisks() : [...state.risks])
-    .sort(SORTERS.score);
+    .sort((a, b) => riskScore(b) - riskScore(a));
 
   const actions = actionRows(risks);
   const completed = actions.filter(item => item.action.status === "Concluída").length;
@@ -2651,17 +3147,21 @@ function buildReport(settings) {
       return `<article class="print-risk">
         <p class="print-note">${risk.linkType === "process" ? "Processo / serviço" : "Projeto / iniciativa"}:
           ${escapeHTML(source.name)}</p>
-        <h2>${escapeHTML(risk.activity)}</h2>
+        <h2>${riskCode(risk)} — ${escapeHTML(risk.activity)}</h2>
         <p><strong>${riskScore(risk)} · ${riskBand(risk).name}</strong>
           — Probabilidade: ${risk.probability} × Impacto: ${risk.impact}</p>
+        ${residualScore(risk) !== null
+          ? `<p><strong>Risco residual: ${residualScore(risk)} · ${bandFor(residualScore(risk)).name}</strong>
+            — Probabilidade: ${risk.residualProbability} × Impacto: ${risk.residualImpact}</p>`
+          : '<p class="print-note">Risco residual não avaliado.</p>'}
         <p><strong>Risco:</strong> ${escapeHTML(riskDescription(risk.description))}</p>
         <p><strong>Causa provável:</strong> ${escapeHTML(risk.cause)}</p>
         <p><strong>Dano ou consequência:</strong> ${escapeHTML(risk.consequence)}</p>
-        <p><strong>Tipologia:</strong> ${risk.typology} · <strong>Tratamento:</strong> ${risk.treatment}</p>
+        <p><strong>Tipologia:</strong> ${escapeHTML(risk.typology)} · <strong>Tratamento:</strong> ${escapeHTML(risk.treatment)}</p>
         ${risk.linkType === "project" ? `<p class="print-note">
-          Responsável pelo projeto: ${escapeHTML(source.owner)} · ${source.status}
+          Responsável pelo projeto: ${escapeHTML(source.owner)} · ${escapeHTML(source.status)}
           · ${dateBR(source.start)} a ${dateBR(source.end)}</p>` : ""}
-        <p class="print-note">ID: ${escapeHTML(risk.id)} · Criado em ${dateTimeBR(risk.createdAt)}
+        <p class="print-note">Código: ${riskCode(risk)} · Criado em ${dateTimeBR(risk.createdAt)}
           · Atualizado em ${dateTimeBR(risk.updatedAt)}</p>
 
         ${settings.actions ? `
@@ -2672,8 +3172,7 @@ function buildReport(settings) {
             <div class="print-action">
               <p><strong>${escapeHTML(action.description)}</strong></p>
               <p>Responsável: ${escapeHTML(action.owner)} · Prazo: ${dateBR(action.due)}</p>
-              <p>Status: ${action.status}${isLate(action) ? " · ATRASADA" : ""}</p>
-              <p class="print-note">ID: ${escapeHTML(action.id)}</p>
+              <p>Status: ${escapeHTML(action.status)}${isLate(action) ? " · ATRASADA" : ""}</p>
             </div>`).join("") : "<p>Nenhuma ação cadastrada.</p>"}
         ` : ""}
       </article>`;
@@ -2739,9 +3238,7 @@ window.addEventListener("beforeprint", () => {
   }
 });
 
-/* =====================================================================
-   14. EVENTOS
-   ===================================================================== */
+/* EVENTOS */
 document.addEventListener("click", event => {
   const button = event.target.closest("button");
   if (!button) return;
@@ -2754,6 +3251,7 @@ document.addEventListener("click", event => {
 
   if (data.entity) {
     filters.entity = data.entity;
+    visibleLimit = PAGE_SIZE;
     render();
     return;
   }
@@ -2763,14 +3261,14 @@ document.addEventListener("click", event => {
   if (data.editRisk) return riskForm(data.editRisk);
 
   if (data.deleteRisk) {
-    const risk = findRisk(data.deleteRisk);
+    const risk = state.risks.find(item => item.id === data.deleteRisk);
 
     confirmModal("Excluir risco e ações",
       `Excluir “${risk.activity}” e suas ${risk.actions.length} ação(ões)?`,
       () => {
-        const before = snapshot();
+        const snapshot = snapshotState();
         state.risks = state.risks.filter(item => item.id !== risk.id);
-        commit("Risco e ações excluídos.", null, undoTo(before));
+        commit("Risco e ações excluídos.", null, undoer(snapshot));
         closeModal();
         render();
       }, "Excluir risco e ações");
@@ -2780,13 +3278,13 @@ document.addEventListener("click", event => {
   if (data.editAction) return editAction(data.risk, data.editAction);
 
   if (data.deleteAction) {
-    const risk = findRisk(data.risk);
+    const risk = state.risks.find(item => item.id === data.risk);
     const action = risk.actions.find(item => item.id === data.deleteAction);
 
     confirmModal("Remover ação", `Remover “${action.description}”?`, () => {
-      const before = snapshot();
+      const snapshot = snapshotState();
       risk.actions = risk.actions.filter(item => item.id !== action.id);
-      commit("Ação removida.", risk, undoTo(before));
+      commit("Ação removida.", risk, undoer(snapshot));
       closeModal();
       render();
       $("#plan-" + risk.id + " summary")?.focus();
@@ -2800,16 +3298,40 @@ document.addEventListener("click", event => {
     case "new-project": entityForm("project"); break;
     case "new-risk": riskForm(); break;
     case "export": exportBackup(); break;
-    case "export-csv": exportCSV(); break;
+    case "csv-risks": exportCSV("risks", [...state.risks].sort((a, b) => a.number - b.number)); break;
+    case "csv-actions": exportCSV("actions", [...state.risks].sort((a, b) => a.number - b.number)); break;
+    case "csv-context": exportCSV("risks", selectedRisks()); break;
     case "import": $("#import-file").click(); break;
     case "pdf": openPDF(); break;
     case "retry-save":
-      persist();
-      renderHeader();
-      renderData();
-      toast(storageStatus);
+      persist().then(() => {
+        renderHeader();
+        if (view === "data") renderData();
+        toast(storageStatus);
+      });
       break;
+    case "clear-legacy":
+      confirmModal("Apagar cópia antiga",
+        "A cópia no localStorage já foi migrada para o IndexedDB. Apagá-la libera espaço, " +
+        "mas você perde esse backup automático antigo. Exporte um backup JSON antes, se quiser.",
+        () => {
+          clearLegacyCopy();
+          closeModal();
+          renderData();
+          toast("Cópia antiga apagada.");
+        }, "Apagar cópia antiga");
+      break;
+    case "more": {
+      const before = visibleLimit;
+      visibleLimit += PAGE_SIZE;
+      renderResults();
+      const next = selectedRisks()[before];
+      if (next) document.getElementById("risk-" + next.id)?.focus({ preventScroll: true });
+      break;
+    }
+    case "reload": location.reload(); break;
     case "clear-filters":
+      visibleLimit = PAGE_SIZE;
       filters = emptyFilters();
       if (view === "processes") filters.kind = "process";
       if (view === "projects") filters.kind = "project";
@@ -2822,8 +3344,16 @@ document.addEventListener("change", event => {
   const element = event.target;
   const data = element.dataset;
 
+  if (element.dataset.heatmode !== undefined) {
+    heatMode = element.value === "residual" ? "residual" : "inherent";
+    renderResults();
+    document.getElementById("heat-mode")?.focus({ preventScroll: true });
+    return;
+  }
+
   if (data.filter) {
     filters[data.filter] = element.value;
+    visibleLimit = PAGE_SIZE;
 
     if (data.filter === "kind") {
       filters.entity = "";
@@ -2838,11 +3368,12 @@ document.addEventListener("change", event => {
   }
 
   if (data.scale) {
-    const risk = findRisk(data.risk);
-    const value = Number(element.value);
+    const risk = state.risks.find(item => item.id === data.risk);
+    const value = element.value === "" ? null : Number(element.value);
     if (risk[data.scale] === value) return;
 
     risk[data.scale] = value;
+    if (data.scale.startsWith("residual")) normalizeResidual(risk, data.scale);
     commit("Avaliação atualizada.", risk);
 
     const hiddenByFilter = filters.severity && filters.severity !== riskBand(risk).name;
@@ -2856,7 +3387,7 @@ document.addEventListener("change", event => {
   }
 
   if (data.actionStatus) {
-    const risk = findRisk(data.risk);
+    const risk = state.risks.find(item => item.id === data.risk);
     const action = risk.actions.find(item => item.id === data.actionStatus);
     if (action.status === element.value) return;
 
@@ -2866,10 +3397,23 @@ document.addEventListener("change", event => {
   }
 });
 
+const debounce = (fn, wait = 150) => {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), wait);
+  };
+};
+
+const applySearch = debounce(() => {
+  visibleLimit = PAGE_SIZE;
+  renderResults();
+});
+
 document.addEventListener("input", event => {
   if (event.target.dataset.filter === "search") {
     filters.search = event.target.value;
-    renderResults();
+    applySearch();
   }
 });
 
@@ -2880,7 +3424,7 @@ document.addEventListener("submit", event => {
 
   if (!validateForm(form)) return;
 
-  const risk = findRisk(form.dataset.actionForm);
+  const risk = state.risks.find(item => item.id === form.dataset.actionForm);
   risk.actions.push({
     id: uid(),
     ...formValues(form),
@@ -2895,9 +3439,11 @@ document.addEventListener("submit", event => {
   nextForm?.elements.description.focus();
 });
 
+const applyServiceSearch = debounce(() => renderServiceList());
+
 $("#service-search").addEventListener("input", event => {
   serviceSearch = event.target.value;
-  renderServiceList();
+  applyServiceSearch();
 });
 
 $("#menu-toggle").addEventListener("click", () => {
@@ -2906,7 +3452,6 @@ $("#menu-toggle").addEventListener("click", () => {
   if (opened) $("#navigation button")?.focus();
 });
 
-/* Atualiza prazos (atrasada / vence em breve) quando a data muda com a página aberta. */
 let currentDay = localDate();
 setInterval(() => {
   const nextDay = localDate();
@@ -2915,12 +3460,25 @@ setInterval(() => {
   if (!$("#modal").open) render();
 }, 60000);
 
-/* =====================================================================
-   15. INICIALIZAÇÃO
-   ===================================================================== */
-load();
-setupTheme();
-render();
+async function boot() {
+  const result = await initStorage();
+
+  state = result.state;
+  storageStatus = result.status;
+  storageBlocked = result.blocked;
+  storageUsage = result.usageRatio ?? 0;
+  loadMessage = result.message || "";
+
+  setupTheme();
+  render();
+  onExternalChange(markStale);
+
+  if (result.migrated) {
+    toast("Dados migrados do armazenamento antigo (localStorage) para o IndexedDB.");
+  }
+}
+
+boot();
 </script>
 </body>
 </html>
