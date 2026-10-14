@@ -1,0 +1,2926 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel de Gestão de Riscos Corporativos — AGU</title>
+
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f1f4f8;
+  --surface: #ffffff;
+  --surface-alt: #f6f8fc;
+  --text: #243347;
+  --muted: #59697e;
+  --border: #d6deea;
+  --sidebar: #223449;
+  --primary: #454ca7;
+  --primary-text: #ffffff;
+  --input: #ffffff;
+  --success: #116540;
+  --danger: #ad2336;
+  --warning: #765200;
+  --focus: #b97700;
+  --low-bg: #e5f5ed;
+  --low-text: #12603e;
+  --medium-bg: #fff2c6;
+  --medium-text: #765200;
+  --high-bg: #ffeddf;
+  --high-text: #98400c;
+  --extreme-bg: #fce7eb;
+  --extreme-text: #ac2435;
+}
+
+@media screen {
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #090d12;
+    --surface: #151d28;
+    --surface-alt: #101720;
+    --text: #e6edf7;
+    --muted: #b4c1d3;
+    --border: #3b495c;
+    --sidebar: #101720;
+    --primary: #8992f1;
+    --primary-text: #080d21;
+    --input: #202c3c;
+    --success: #94e2b9;
+    --danger: #ffb2bd;
+    --warning: #ffe08b;
+    --focus: #f3cd75;
+    --low-bg: #143d2e;
+    --low-text: #94e2b9;
+    --medium-bg: #44391c;
+    --medium-text: #ffe08b;
+    --high-bg: #492d1c;
+    --high-text: #ffc18b;
+    --extreme-bg: #48232e;
+    --extreme-text: #ffb2bd;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+button, input, select, textarea { font: inherit; }
+
+button {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+button:hover { filter: brightness(.94); }
+button:disabled { opacity: .55; cursor: not-allowed; }
+
+button.primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-text);
+}
+
+button.danger { color: var(--danger); }
+button.small { padding: 7px 10px; font-size: .875rem; }
+
+input, select, textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--input);
+  color: var(--text);
+}
+
+textarea { min-height: 90px; resize: vertical; }
+input[type="color"] { padding: 4px; }
+input[type="checkbox"] { width: 20px; min-height: 20px; }
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: .875rem;
+  font-weight: 650;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+[hidden] { display: none !important; }
+
+h1, h2, h3, h4 { line-height: 1.3; }
+h2 { margin: 0 0 7px; font-size: 1.8rem; }
+h3 { margin: 0 0 13px; font-size: 1.1rem; }
+p { overflow-wrap: anywhere; }
+
+.skip {
+  position: fixed;
+  top: -100px;
+  left: 12px;
+  z-index: 100;
+  padding: 12px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.skip:focus { top: 12px; }
+
+.app {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  padding: 25px 20px;
+  color: #edf3fc;
+  background: var(--sidebar);
+}
+
+.brand { display: flex; align-items: center; gap: 13px; }
+
+.brand-mark {
+  border: 1px solid #8392a6;
+  border-radius: 10px;
+  padding: 13px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.brand small {
+  display: block;
+  margin-top: 5px;
+  color: #c5d0e1;
+}
+
+.nav { display: grid; gap: 7px; }
+
+.nav button {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  border-color: transparent;
+  color: #edf3fc;
+  background: transparent;
+  font-size: .9rem;
+}
+
+.nav button[aria-current="page"],
+.nav button:hover { background: #3b506c; }
+
+.counter {
+  margin-left: auto;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: #172637;
+  font-size: .75rem;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  flex-shrink: 0;
+}
+
+.sidebar-section {
+  border-top: 1px solid #4b5c72;
+  padding-top: 18px;
+}
+
+.sidebar-section input {
+  background: #172637;
+  border-color: #66788f;
+  color: #fff;
+}
+
+.sidebar-section input::placeholder { color: #bcc9da; }
+
+.service-list {
+  display: grid;
+  gap: 4px;
+  margin: 12px 0;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.service-list button {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: #edf3fc;
+  text-align: left;
+  font-size: .875rem;
+  font-weight: 400;
+}
+
+.service-list button:hover { background: #3b506c; }
+.service-list .count { margin-left: auto; }
+
+.dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1px solid #96a5b9;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.sidebar-new {
+  width: 100%;
+  background: #354960;
+  color: #fff;
+  border-color: #6c7d94;
+  font-size: .875rem;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  color: #c5d0e1;
+  font-size: .8rem;
+}
+
+.main-shell { min-width: 0; }
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  padding: 20px 28px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar h1 { margin: 0; font-size: 1.02rem; }
+.topbar p { margin: 4px 0 0; font-size: .8rem; color: var(--muted); }
+
+.header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.storage { font-size: .75rem; color: var(--muted); margin-top: 8px; }
+.storage strong, .storage span { display: block; }
+.storage.saved strong { color: var(--success); }
+.backup-warn { color: var(--warning); font-weight: 650; }
+
+.content {
+  max-width: 1600px;
+  padding: 28px;
+  margin: auto;
+}
+
+.heading, .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.heading { margin-bottom: 22px; }
+.heading p { margin: 0; color: var(--muted); font-size: .9rem; }
+
+.eyebrow {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  font-size: .75rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 21px;
+  min-width: 0;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.filters .search { grid-column: span 3; }
+.filters .sort { grid-column: span 2; }
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  min-height: 145px;
+  padding: 20px;
+  border-top: 3px solid #8292af;
+  border-radius: 12px;
+}
+
+.metric.critical { border-top-color: #c64e61; }
+.metric.good { border-top-color: #279270; }
+.metric span { font-size: .875rem; color: var(--muted); }
+.metric strong { font-size: 2.2rem; line-height: 1.5; }
+.metric small { margin-top: auto; color: var(--muted); font-size: .75rem; }
+
+.two-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.mini-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mini {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  font-size: .875rem;
+}
+
+.mini strong { font-size: 1.2rem; }
+
+.bar-button {
+  display: grid;
+  grid-template-columns: 75px 1fr 30px;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 9px 0;
+  border: 0;
+  text-align: left;
+  font-size: .875rem;
+}
+
+.track {
+  display: block;
+  height: 11px;
+  background: var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.fill { display: block; height: 100%; border-radius: 10px; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 5px;
+  padding: 5px 8px;
+  font-size: .8rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.neutral { background: var(--surface-alt); color: var(--text); }
+.low { background: var(--low-bg); color: var(--low-text); }
+.medium { background: var(--medium-bg); color: var(--medium-text); }
+.high { background: var(--high-bg); color: var(--high-text); }
+.extreme { background: var(--extreme-bg); color: var(--extreme-text); }
+
+/* Matriz de calor */
+.heat {
+  border-collapse: separate;
+  border-spacing: 4px;
+  width: 100%;
+  min-width: 420px;
+  table-layout: fixed;
+}
+
+.heat caption {
+  caption-side: bottom;
+  text-align: left;
+  padding-top: 8px;
+  color: var(--muted);
+  font-size: .8rem;
+}
+
+.heat th {
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  text-align: center;
+  vertical-align: middle;
+  font-size: .75rem;
+}
+
+.heat tbody th { width: 22%; text-align: right; padding-right: 8px; }
+.heat td { padding: 0; border: 0; }
+
+.heat-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  border-color: transparent;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.heat-cell.zero { opacity: .55; }
+
+.table-wrap { overflow-x: auto; }
+
+table { border-collapse: collapse; width: 100%; font-size: .875rem; }
+
+td, th {
+  text-align: left;
+  vertical-align: top;
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+th { background: var(--surface-alt); color: var(--muted); }
+td p { margin: 4px 0; }
+
+.entity-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.entity-list p { white-space: pre-wrap; }
+
+.risk-list { display: grid; gap: 18px; }
+
+.risk-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid #8a99b0;
+  border-radius: 12px;
+  padding: 22px;
+  scroll-margin-top: 25px;
+}
+
+.risk-card h3 { margin: 16px 0 9px; }
+.risk-card p { margin: 9px 0; white-space: pre-wrap; }
+
+.consequence {
+  padding: 12px;
+  border-left: 3px solid #8a99b0;
+  background: var(--surface-alt);
+}
+
+.risk-meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
+
+.score-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 14px;
+  align-items: end;
+  border-top: 1px solid var(--border);
+  padding-top: 15px;
+}
+
+.score { padding: 11px 15px; border-radius: 7px; font-weight: 700; }
+
+.metadata { color: var(--muted); font-size: .75rem; }
+.muted { color: var(--muted); }
+.help { color: var(--muted); font-size: .8rem; }
+.footnote { color: var(--muted); font-size: .8rem; margin-top: 22px; }
+
+.plan {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.plan summary { cursor: pointer; font-weight: 650; }
+
+.progress {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 15px 0;
+  font-size: .8rem;
+}
+
+progress { flex: 1; height: 10px; accent-color: #258864; }
+
+.action-item {
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 25px;
+}
+
+.action-item select { width: auto; max-width: 100%; }
+.action-item p { margin: 5px 0; }
+.overdue { color: var(--danger); font-weight: 650; }
+.soon { color: var(--warning); font-weight: 650; }
+
+.action-form {
+  background: var(--surface-alt);
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 17px;
+}
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.full { grid-column: 1 / -1; }
+
+.form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.field-error { color: var(--danger); font-size: .8rem; margin-top: 5px; }
+.field-error:empty { display: none; }
+[aria-invalid="true"] { border-color: var(--danger); }
+
+.form-message, .notice {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  padding: 14px;
+  border-radius: 8px;
+  margin: 14px 0;
+}
+
+.form-message { color: var(--danger); border-left-color: var(--danger); }
+
+.empty {
+  text-align: center;
+  padding: 30px 18px;
+  border: 1px dashed var(--border);
+  background: var(--surface-alt);
+  border-radius: 10px;
+  color: var(--muted);
+}
+
+.empty p { margin-top: 0; }
+
+.tools { display: grid; gap: 18px; max-width: 950px; }
+
+dialog {
+  width: min(800px, calc(100% - 28px));
+  max-height: 90vh;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 25px 80px #0005;
+}
+
+dialog::backdrop { background: #0b1326aa; }
+
+.modal-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 22px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-head h2 { margin: 0; font-size: 1.2rem; }
+.modal-body { padding: 22px; }
+.modal-body > p:first-child { margin-top: 0; }
+
+.detail-list { display: grid; gap: 12px; max-height: 55vh; overflow: auto; }
+.detail-item { padding: 15px; border: 1px solid var(--border); border-radius: 8px; }
+.detail-item h3 { margin: 9px 0; }
+.detail-item p { white-space: pre-wrap; }
+
+.toast {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: min(480px, calc(100vw - 40px));
+  padding: 14px 18px;
+  background: #22384f;
+  color: #fff;
+  border-radius: 9px;
+  box-shadow: 0 5px 22px #0004;
+  z-index: 50;
+}
+
+.toast button { flex-shrink: 0; }
+
+.highlight { outline: 4px solid var(--focus) !important; outline-offset: 4px; }
+.mobile-menu { display: none; }
+#print-area { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+}
+
+@media (max-width: 1150px) {
+  .app { grid-template-columns: 280px minmax(0, 1fr); }
+  .content { padding: 22px; }
+  .filters { grid-template-columns: 1fr 1fr; }
+  .filters > button,
+  .filters .search,
+  .filters .sort { grid-column: 1 / -1; }
+  .two-columns, .entity-list { grid-template-columns: 1fr; }
+  .topbar { flex-wrap: wrap; }
+}
+
+@media (max-width: 800px) {
+  .app { display: block; }
+  .sidebar { display: none; position: relative; height: auto; }
+  .sidebar.open { display: flex; }
+  .mobile-menu { display: inline-block; }
+  .content { padding: 20px 15px; }
+  .topbar { padding: 15px; }
+  h2 { font-size: 1.45rem; }
+  .metrics { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .metric { padding: 15px; }
+  .metric strong { font-size: 1.9rem; }
+  .form-grid { grid-template-columns: 1fr; }
+  .full { grid-column: auto; }
+  .score-row { grid-template-columns: 1fr 1fr; }
+  .score { grid-column: 1 / -1; text-align: center; }
+  .risk-card { padding: 16px; }
+  .modal-body { padding: 17px; }
+  .heat { min-width: 0; }
+  .heat .lbl { display: none; }
+  .heat tbody th { width: 12%; }
+}
+
+@media (max-width: 390px) {
+  .filters, .mini-grid { grid-template-columns: 1fr; }
+}
+
+@page { size: A4; margin: 16mm 14mm; }
+
+@media print {
+  html { color-scheme: light; }
+  body { background: white; color: #17283a; }
+  .app, .skip, dialog, .toast { display: none !important; }
+
+  #print-area {
+    display: block !important;
+    font: 10pt/1.5 Arial, sans-serif;
+    color: #17283a;
+  }
+
+  #print-area * { overflow-wrap: anywhere; }
+
+  .print-head {
+    border-bottom: 2px solid #223449;
+    padding-bottom: 12px;
+    margin-bottom: 15px;
+  }
+
+  .print-head h1 { font-size: 19pt; margin: 0 0 8px; }
+  .print-head p { margin: 5px 0; }
+  .print-note { font-size: 9pt; color: #46576a; }
+
+  .print-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin: 16px 0;
+  }
+
+  .print-stat { padding: 9px; border: 1px solid #bdc8d6; break-inside: avoid; }
+  .print-stat strong { display: block; font-size: 17pt; }
+
+  .print-risk {
+    border-top: 2px solid #9daec2;
+    padding-top: 12px;
+    margin: 20px 0;
+  }
+
+  .print-risk h2 { font-size: 13pt; margin: 6px 0; break-after: avoid; }
+  .print-risk h3 { font-size: 11pt; break-after: avoid; }
+  .print-risk p { margin: 6px 0; white-space: pre-wrap; }
+
+  .print-action {
+    border-left: 2px solid #a7b5c6;
+    padding-left: 10px;
+    margin: 12px 0;
+    break-inside: avoid;
+  }
+
+  .print-footer {
+    border-top: 1px solid #bdc8d6;
+    margin-top: 20px;
+    padding-top: 10px;
+    font-size: 8pt;
+  }
+}
+</style>
+</head>
+
+<body>
+<a class="skip" href="#main">Ir para o conteúdo</a>
+<noscript><p style="padding:20px">Este painel precisa de JavaScript para funcionar.</p></noscript>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar" aria-label="Navegação principal">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">AGU</div>
+      <div>
+        <strong id="sidebar-unit">UNIDADE / AGU</strong>
+        <small>Gestão de Riscos Corporativos</small>
+      </div>
+    </div>
+
+    <nav class="nav" id="navigation"></nav>
+
+    <section class="sidebar-section">
+      <label for="service-search">Buscar serviço</label>
+      <input id="service-search" type="search" placeholder="Nome do serviço">
+      <div class="service-list" id="service-list"></div>
+      <button class="sidebar-new" data-cmd="new-service">
+        + Novo Serviço / Macroprocesso
+      </button>
+    </section>
+
+    <div class="sidebar-footer">
+      <strong>Nível de risco: Probabilidade (1–5) × Impacto (1–5)</strong>
+      <p>Modelo configurado para este painel.<br>Uso local · sem autenticação</p>
+    </div>
+  </aside>
+
+  <div class="main-shell">
+    <header class="topbar">
+      <button class="mobile-menu small" id="menu-toggle"
+        aria-controls="sidebar" aria-expanded="false">☰ Menu</button>
+
+      <div>
+        <h1 id="page-title"></h1>
+        <p id="unit-name"></p>
+        <p id="unit-people"></p>
+      </div>
+
+      <div>
+        <div class="header-actions">
+          <button id="theme-toggle" class="small" type="button">Tema escuro</button>
+          <button class="small" data-cmd="pdf">Gerar PDF</button>
+        </div>
+        <div class="storage" id="storage" role="status" aria-live="polite">
+          <strong id="storage-status"></strong>
+          <span id="last-change"></span>
+          <span id="backup-status" class="backup-warn"></span>
+        </div>
+      </div>
+    </header>
+
+    <main class="content" id="main" tabindex="-1"></main>
+  </div>
+</div>
+
+<dialog id="modal" aria-labelledby="modal-title">
+  <header class="modal-head">
+    <h2 id="modal-title"></h2>
+    <button class="small" type="button" data-cmd="close-modal"
+      aria-label="Fechar janela">Fechar ×</button>
+  </header>
+  <div class="modal-body" id="modal-body"></div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<section id="print-area" aria-label="Relatório para impressão"></section>
+
+<script>
+"use strict";
+
+/* =====================================================================
+   1. CONFIGURAÇÃO DO MODELO
+   ===================================================================== */
+const MODEL = {
+  probability: ["Muito baixa", "Baixa", "Média", "Alta", "Muito alta"],
+  impact: ["Insignificante", "Menor", "Moderado", "Maior", "Catastrófico"],
+  types: ["Operacional", "Legal", "Financeiro", "Integridade"],
+  treatments: ["Controlar", "Reduzir", "Mitigar", "Aceitar"],
+  projectStatuses: ["Planejado", "Em andamento", "Concluído", "Cancelado"],
+  actionStatuses: ["Pendente", "Em andamento", "Concluída"],
+  critical: 10,
+  soonDays: 7,
+  bands: [
+    { name: "Baixo", min: 1, max: 4, css: "low", color: "#22885e" },
+    { name: "Médio", min: 5, max: 9, css: "medium", color: "#b98100" },
+    { name: "Alto", min: 10, max: 15, css: "high", color: "#cb6b28" },
+    { name: "Extremo", min: 16, max: 25, css: "extreme", color: "#c53d54" }
+  ]
+};
+
+const STORAGE_KEY = "agu.riscos.corporativos.v1";
+const THEME_KEY = "agu.riscos.theme.v1";
+const EXPORT_KEY = "agu.riscos.lastExport.v1";
+const SCHEMA_VERSION = 1;
+const DELETE_WITH_RISKS = "__delete_with_risks__";
+
+/* =====================================================================
+   2. UTILITÁRIOS
+   ===================================================================== */
+const $ = (selector, root = document) => root.querySelector(selector);
+const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+
+const escapeHTML = value => String(value ?? "").replace(
+  /[&<>"']/g,
+  c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;",
+    '"': "&quot;", "'": "&#39;"
+  }[c])
+);
+
+const uid = () => globalThis.crypto?.randomUUID?.() ||
+  "id-" + Date.now().toString(36) + "-" +
+  Math.random().toString(36).slice(2) + "-" +
+  Math.random().toString(36).slice(2);
+
+const now = () => new Date().toISOString();
+const numberBR = value => Number(value).toLocaleString("pt-BR");
+
+function localDate(date = new Date()) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0")
+  ].join("-");
+}
+
+function localDatePlus(days) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return localDate(date);
+}
+
+const dateBR = value => value ? value.split("-").reverse().join("/") : "Não informado";
+const dateTimeBR = value => value ? new Date(value).toLocaleString("pt-BR") : "Nenhuma alteração";
+const riskDescription = value => String(value).replace(/^(?:\s*risco\s*:\s*)+/i, "").trim();
+
+/* Regras de negócio */
+const riskScore = risk => risk.probability * risk.impact;
+const bandOfScore = score => MODEL.bands.find(b => score >= b.min && score <= b.max);
+const riskBand = risk => bandOfScore(riskScore(risk));
+const isLate = action => action.status !== "Concluída" && action.due < localDate();
+const isSoon = action => action.status !== "Concluída" &&
+  action.due >= localDate() && action.due <= localDatePlus(MODEL.soonDays);
+
+const SORTERS = {
+  score: (a, b) => riskScore(b) - riskScore(a) ||
+    a.activity.localeCompare(b.activity, "pt-BR"),
+  recent: (a, b) => b.updatedAt.localeCompare(a.updatedAt),
+  activity: (a, b) => a.activity.localeCompare(b.activity, "pt-BR")
+};
+
+/* =====================================================================
+   3. ESTADO DA APLICAÇÃO
+   ===================================================================== */
+function emptyState() {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    unit: {
+      acronym: "UNIDADE",
+      name: "Unidade não configurada",
+      technical: "",
+      operator: ""
+    },
+    lastModified: null,
+    services: [],
+    projects: [],
+    risks: []
+  };
+}
+
+const emptyFilters = () => ({
+  kind: "all",
+  entity: "",
+  typology: "",
+  severity: "",
+  search: "",
+  sort: "score"
+});
+
+let state;
+let view = "dashboard";
+let filters = emptyFilters();
+let serviceSearch = "";
+let storageStatus = "Alterações em memória";
+let storageBlocked = false;
+let loadMessage = "";
+let modalOpener = null;
+let toastTimer;
+let preparedPrint = false;
+let printSettings = { scope: "all", actions: true };
+let lastExport = null;
+try { lastExport = localStorage.getItem(EXPORT_KEY); } catch {}
+
+/* Consultas sobre o estado */
+const findRisk = id => state.risks.find(risk => risk.id === id);
+
+function sourceOf(risk) {
+  const list = risk.linkType === "process" ? state.services : state.projects;
+  return list.find(item => item.id === risk.linkId);
+}
+
+function actionRows(risks) {
+  return risks.flatMap(risk => risk.actions.map(action => ({ risk, action })));
+}
+
+function riskCounts() {
+  const counts = new Map();
+  for (const risk of state.risks) {
+    counts.set(risk.linkId, (counts.get(risk.linkId) || 0) + 1);
+  }
+  return counts;
+}
+
+function selectedRisks() {
+  const query = filters.search.toLocaleLowerCase("pt-BR");
+
+  return state.risks.filter(risk => {
+    const text = [
+      risk.activity, risk.description, risk.cause,
+      risk.consequence, sourceOf(risk)?.name
+    ].join(" ").toLocaleLowerCase("pt-BR");
+
+    return (filters.kind === "all" || risk.linkType === filters.kind) &&
+      (!filters.entity || risk.linkId === filters.entity) &&
+      (!filters.typology || risk.typology === filters.typology) &&
+      (!filters.severity || riskBand(risk).name === filters.severity) &&
+      (!query || text.includes(query));
+  }).sort(SORTERS[filters.sort] || SORTERS.score);
+}
+
+function backupPending() {
+  const hasData = state.risks.length + state.services.length + state.projects.length > 0;
+  return hasData && !!state.lastModified && (!lastExport || state.lastModified > lastExport);
+}
+
+/* =====================================================================
+   4. VALIDAÇÃO DE BACKUPS
+   ===================================================================== */
+function validateState(raw, isBackup = false) {
+  const fail = message => { throw new Error(message); };
+
+  function object(value, label) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      fail(label + ": objeto inválido.");
+    }
+  }
+
+  function text(value, label, required = true, max = 10000) {
+    if (typeof value !== "string" || value.length > max ||
+        (required && !value.trim())) {
+      fail(label + ": texto inválido ou obrigatório.");
+    }
+    return value;
+  }
+
+  function array(value, label) {
+    if (!Array.isArray(value) || value.length > 20000) {
+      fail(label + ": lista inválida ou acima de 20.000 registros.");
+    }
+    return value;
+  }
+
+  function enumeration(value, list, label) {
+    if (!list.includes(value)) fail(label + ": opção inválida.");
+    return value;
+  }
+
+  function timestamp(value, label) {
+    if (typeof value !== "string" ||
+        !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value) ||
+        !Number.isFinite(Date.parse(value)) ||
+        new Date(value).toISOString() !== value) {
+      fail(label + ": data e hora inválidas.");
+    }
+    return value;
+  }
+
+  function calendarDate(value, label) {
+    if (typeof value !== "string" ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
+        value < "0001-01-01" ||
+        !Number.isFinite(Date.parse(value + "T12:00:00Z")) ||
+        new Date(value + "T12:00:00Z").toISOString().slice(0, 10) !== value) {
+      fail(label + ": data inválida.");
+    }
+    return value;
+  }
+
+  const usedIds = new Set();
+
+  function identifier(value, label) {
+    text(value, label, true, 100);
+    if (!/^[A-Za-z0-9_-]+$/.test(value) || usedIds.has(value)) {
+      fail(label + ": identificador inválido ou duplicado.");
+    }
+    usedIds.add(value);
+    return value;
+  }
+
+  object(raw, "Arquivo");
+
+  if (raw.schemaVersion !== SCHEMA_VERSION) {
+    fail("Versão de backup incompatível. Esperada: " + SCHEMA_VERSION + ".");
+  }
+
+  if (isBackup) timestamp(raw.exportedAt, "Data da exportação");
+  object(raw.unit, "Unidade");
+
+  const result = {
+    schemaVersion: SCHEMA_VERSION,
+    unit: {},
+    lastModified: raw.lastModified === null
+      ? null
+      : timestamp(raw.lastModified, "Última alteração"),
+    services: [],
+    projects: [],
+    risks: []
+  };
+
+  for (const key of ["acronym", "name", "technical", "operator"]) {
+    result.unit[key] = text(raw.unit[key], "Unidade / " + key, false,
+      key === "acronym" ? 40 : 200);
+  }
+
+  result.services = array(raw.services, "Serviços").map((item, index) => {
+    const label = "Serviço " + (index + 1);
+    object(item, label);
+
+    if (typeof item.color !== "string" || !/^#[0-9a-f]{6}$/i.test(item.color)) {
+      fail(label + ": cor inválida.");
+    }
+
+    return {
+      id: identifier(item.id, label),
+      name: text(item.name, label + " / nome", true, 200),
+      color: item.color,
+      demo: item.demo === true
+    };
+  });
+
+  result.projects = array(raw.projects, "Projetos").map((item, index) => {
+    const label = "Projeto " + (index + 1);
+    object(item, label);
+
+    const start = calendarDate(item.start, label + " / início");
+    const end = calendarDate(item.end, label + " / prazo");
+    if (end < start) fail(label + ": prazo anterior ao início.");
+
+    return {
+      id: identifier(item.id, label),
+      name: text(item.name, label + " / nome", true, 200),
+      description: text(item.description, label + " / objetivo"),
+      owner: text(item.owner, label + " / responsável", true, 200),
+      start,
+      end,
+      status: enumeration(item.status, MODEL.projectStatuses, label),
+      demo: item.demo === true
+    };
+  });
+
+  result.risks = array(raw.risks, "Riscos").map((risk, index) => {
+    const label = "Risco " + (index + 1);
+    object(risk, label);
+
+    const item = {
+      id: identifier(risk.id, label),
+      linkType: enumeration(risk.linkType, ["process", "project"], label),
+      linkId: text(risk.linkId, label + " / vínculo", true, 100),
+      demo: risk.demo === true
+    };
+
+    const sources = item.linkType === "process" ? result.services : result.projects;
+    if (!sources.some(source => source.id === item.linkId)) {
+      fail(label + ": serviço ou projeto vinculado não encontrado.");
+    }
+
+    for (const key of ["activity", "description", "cause", "consequence"]) {
+      item[key] = text(risk[key], label + " / " + key, true,
+        key === "activity" ? 300 : 10000);
+    }
+
+    if (!riskDescription(item.description)) fail(label + ": descrição vazia.");
+
+    item.typology = enumeration(risk.typology, MODEL.types, label + " / tipologia");
+    item.treatment = enumeration(risk.treatment, MODEL.treatments, label + " / tratamento");
+
+    for (const key of ["probability", "impact"]) {
+      if (!Number.isInteger(risk[key]) || risk[key] < 1 || risk[key] > 5) {
+        fail(label + ": probabilidade e impacto devem ser inteiros de 1 a 5.");
+      }
+      item[key] = risk[key];
+    }
+
+    item.createdAt = timestamp(risk.createdAt, label + " / criação");
+    item.updatedAt = timestamp(risk.updatedAt, label + " / atualização");
+
+    if (item.updatedAt < item.createdAt) {
+      fail(label + ": atualização anterior à criação.");
+    }
+
+    item.actions = array(risk.actions, label + " / ações").map((action, i) => {
+      const actionLabel = label + " / ação " + (i + 1);
+      object(action, actionLabel);
+
+      return {
+        id: identifier(action.id, actionLabel),
+        description: text(action.description, actionLabel + " / descrição"),
+        owner: text(action.owner, actionLabel + " / responsável", true, 200),
+        due: calendarDate(action.due, actionLabel + " / prazo"),
+        status: enumeration(action.status, MODEL.actionStatuses, actionLabel),
+        demo: action.demo === true
+      };
+    });
+
+    return item;
+  });
+
+  return result;
+}
+
+/* Compatibilidade com bases antigas: preserva registros reais e seus vínculos. */
+function removeLegacyExamples(base) {
+  let changed = false;
+
+  base.risks = base.risks.filter(risk => {
+    const realActions = risk.actions.filter(action => !action.demo);
+
+    if (risk.demo && !realActions.length) {
+      changed = true;
+      return false;
+    }
+
+    if (risk.demo || realActions.length !== risk.actions.length) {
+      changed = true;
+      risk.updatedAt = now();
+    }
+
+    risk.actions = realActions;
+    risk.demo = false;
+    return true;
+  });
+
+  const linked = new Set(base.risks.map(risk => risk.linkId));
+
+  for (const key of ["services", "projects"]) {
+    base[key] = base[key].filter(item => {
+      if (item.demo && !linked.has(item.id)) {
+        changed = true;
+        return false;
+      }
+      if (item.demo) changed = true;
+      item.demo = false;
+      return true;
+    });
+  }
+
+  if (changed) base.lastModified = now();
+  return base;
+}
+
+/* =====================================================================
+   5. ARMAZENAMENTO, DESFAZER E SINCRONIZAÇÃO
+   ===================================================================== */
+function persist() {
+  if (storageBlocked) {
+    storageStatus = "Alterações em memória";
+    return;
+  }
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    storageStatus = "Salvo neste navegador";
+  } catch {
+    storageStatus = "Armazenamento local indisponível";
+  }
+}
+
+function load() {
+  state = emptyState();
+
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+
+    if (saved === null) {
+      persist();
+      return;
+    }
+
+    try {
+      const valid = validateState(JSON.parse(saved));
+      const before = JSON.stringify(valid);
+      state = removeLegacyExamples(valid);
+      storageStatus = "Salvo neste navegador";
+      if (JSON.stringify(state) !== before) persist();
+    } catch (error) {
+      storageBlocked = true;
+      storageStatus = "Alterações em memória";
+      loadMessage = "A base salva não pôde ser lida: " + error.message +
+        " A cópia anterior será preservada. Importe um backup válido para retomar o salvamento.";
+    }
+  } catch {
+    storageStatus = "Armazenamento local indisponível";
+  }
+}
+
+function commit(message = "Alterações salvas.", risk = null, undo = null) {
+  if (risk) risk.updatedAt = now();
+  state.lastModified = now();
+  persist();
+  renderHeader();
+
+  if (message) {
+    toast(storageStatus === "Salvo neste navegador"
+      ? message
+      : message + " Dados apenas em memória; exporte um backup.", undo);
+  }
+}
+
+/* Desfazer exclusões: guarda uma cópia do estado antes da alteração. */
+const snapshot = () => JSON.stringify(state);
+
+function undoTo(before) {
+  return () => {
+    state = JSON.parse(before);
+    commit("Exclusão desfeita.");
+    render();
+  };
+}
+
+function toast(message, undo = null) {
+  clearTimeout(toastTimer);
+  const element = $("#toast");
+  const text = document.createElement("span");
+  text.textContent = message;
+  element.replaceChildren(text);
+
+  if (undo) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "small";
+    button.textContent = "Desfazer";
+    button.onclick = () => { element.hidden = true; undo(); };
+    element.append(button);
+  }
+
+  element.hidden = false;
+  toastTimer = setTimeout(() => element.hidden = true, undo ? 10000 : 6500);
+}
+
+/* Se outra aba gravar a base, esta aba acompanha em vez de sobrescrevê-la. */
+window.addEventListener("storage", event => {
+  if (event.key !== STORAGE_KEY || storageBlocked) return;
+
+  if ($("#modal").open) {
+    toast("Os dados foram alterados em outra aba. Feche esta janela e recarregue a página para evitar perda de alterações.");
+    return;
+  }
+
+  try {
+    state = removeLegacyExamples(validateState(JSON.parse(event.newValue)));
+    render();
+    toast("Dados atualizados a partir de outra aba.");
+  } catch {
+    toast("Outra aba gravou dados inválidos. Recarregue a página.");
+  }
+});
+
+/* =====================================================================
+   6. TEMA
+   ===================================================================== */
+function applyTheme(dark) {
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  const button = $("#theme-toggle");
+  button.textContent = dark ? "Tema claro" : "Tema escuro";
+  button.setAttribute("aria-pressed", String(dark));
+  button.setAttribute("aria-label", dark
+    ? "Tema escuro ativado. Mudar para tema claro"
+    : "Tema claro ativado. Mudar para tema escuro");
+}
+
+function setupTheme() {
+  let dark = !!globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches;
+  try {
+    const stored = localStorage.getItem(THEME_KEY);
+    if (stored) dark = stored === "dark";
+  } catch {}
+  applyTheme(dark);
+
+  $("#theme-toggle").addEventListener("click", () => {
+    const next = document.documentElement.dataset.theme !== "dark";
+    applyTheme(next);
+    try {
+      localStorage.setItem(THEME_KEY, next ? "dark" : "light");
+    } catch {
+      toast("Tema aplicado nesta sessão. Não foi possível salvar a preferência.");
+    }
+  });
+}
+
+/* =====================================================================
+   7. COMPONENTES DE INTERFACE
+   ===================================================================== */
+function icon(name) {
+  const paths = {
+    dashboard: "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z",
+    processes: "M3 6h7l2 3h9v11H3z M3 6V4h7l2 2h9v3",
+    projects: "M8 6V3h8v3 M3 6h18v15H3z M3 11h18 M10 11v3h4v-3",
+    settings: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M12 2v3 M12 19v3 M2 12h3 M19 12h3 M5 5l2 2 M17 17l2 2",
+    data: "M5 5c0-4 14-4 14 0s-14 4-14 0 M5 5v7c0 4 14 4 14 0V5 M5 12v7c0 4 14 4 14 0v-7"
+  };
+  return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="${paths[name] || paths.dashboard}"></path></svg>`;
+}
+
+function options(values, selected, emptyLabel) {
+  const empty = emptyLabel !== undefined
+    ? `<option value="">${escapeHTML(emptyLabel)}</option>` : "";
+
+  return empty + values.map(item => {
+    const [value, label] = Array.isArray(item) ? item : [item, item];
+    return `<option value="${escapeHTML(value)}"
+      ${String(value) === String(selected) ? "selected" : ""}>
+      ${escapeHTML(label)}</option>`;
+  }).join("");
+}
+
+const scaleOptions = key => MODEL[key].map((label, i) => [i + 1, (i + 1) + " · " + label]);
+
+function field(name, label, value = "", type = "text", required = false, prefix = "f") {
+  const id = prefix + "-" + name;
+  const requiredText = required ? " required" : "";
+  const max = name === "activity" ? 300 : 200;
+  const input = type === "textarea"
+    ? `<textarea id="${id}" name="${name}" maxlength="10000"${requiredText}>${escapeHTML(value)}</textarea>`
+    : `<input id="${id}" name="${name}" type="${type}" value="${escapeHTML(value)}"
+      ${type === "text" ? `maxlength="${max}"` : ""}
+      ${type === "date" ? 'min="0001-01-01" max="9999-12-31"' : ""}${requiredText}>`;
+
+  return `<div class="${type === "textarea" ? "full" : ""}">
+    <label for="${id}">${escapeHTML(label)}${required ? " *" : ""}</label>
+    ${input}<div class="field-error" id="${id}-error"></div></div>`;
+}
+
+function selectField(name, label, values, selected, prefix = "f", required = false) {
+  const id = prefix + "-" + name;
+  return `<div><label for="${id}">${escapeHTML(label)}${required ? " *" : ""}</label>
+    <select id="${id}" name="${name}" ${required ? "required" : ""}>
+      ${options(values, selected)}
+    </select><div class="field-error" id="${id}-error"></div></div>`;
+}
+
+function emptyMessage(message, label = "Cadastrar risco", command = "new-risk") {
+  return `<div class="empty"><p>${escapeHTML(message)}</p>
+    <button class="primary" data-cmd="${command}">${escapeHTML(label)}</button></div>`;
+}
+
+/* =====================================================================
+   8. RENDERIZAÇÃO
+   ===================================================================== */
+function renderHeader() {
+  const unit = state.unit;
+  const title = "Painel de Gestão de Riscos Corporativos — " +
+    (unit.acronym || "UNIDADE") + " / AGU";
+
+  document.title = title;
+  $("#page-title").textContent = title;
+  $("#sidebar-unit").textContent = (unit.acronym || "UNIDADE") + " / AGU";
+  $("#unit-name").textContent = (unit.name || "Unidade não configurada") +
+    " · Gestão de Riscos Corporativos";
+  $("#unit-people").textContent = "Responsável técnico: " +
+    (unit.technical || "não informado") + " · Operador: " +
+    (unit.operator || "não informado");
+  $("#storage-status").textContent = storageStatus;
+  $("#last-change").textContent = "Última alteração: " + dateTimeBR(state.lastModified);
+  $("#backup-status").textContent = backupPending()
+    ? "Backup pendente: exporte um JSON em Ferramentas de Dados."
+    : "";
+  $("#storage").classList.toggle("saved", storageStatus === "Salvo neste navegador");
+}
+
+function renderSidebar() {
+  const menu = [
+    ["dashboard", "Dashboard Executivo", state.risks.filter(r => riskScore(r) >= MODEL.critical).length],
+    ["processes", "Processos & Serviços", state.risks.filter(r => r.linkType === "process").length],
+    ["projects", "Projetos & Iniciativas", state.projects.length],
+    ["settings", "Configurações da Unidade", null],
+    ["data", "Ferramentas de Dados", null]
+  ];
+
+  $("#navigation").innerHTML = menu.map(([key, label, count]) =>
+    `<button data-nav="${key}" ${view === key ? 'aria-current="page"' : ""}>
+      ${icon(key)}<span>${label}</span>
+      ${count !== null ? `<span class="counter">${numberBR(count)}</span>` : ""}
+    </button>`).join("");
+
+  renderServiceList();
+}
+
+function renderServiceList() {
+  const query = serviceSearch.toLocaleLowerCase("pt-BR");
+  const counts = riskCounts();
+
+  $("#service-list").innerHTML =
+    `<button data-service="">Todos os Processos
+      <span class="count">${state.risks.filter(r => r.linkType === "process").length}</span>
+    </button>` +
+    state.services.filter(service =>
+      service.name.toLocaleLowerCase("pt-BR").includes(query)
+    ).map(service => `<button data-service="${service.id}">
+      <span class="dot" style="background:${service.color}"></span>
+      <span>${escapeHTML(service.name)}</span>
+      <span class="count">${counts.get(service.id) || 0}</span>
+    </button>`).join("");
+}
+
+function navigate(nextView, entity = "") {
+  view = nextView;
+  filters = emptyFilters();
+  if (view === "processes") filters.kind = "process";
+  if (view === "projects") filters.kind = "project";
+  filters.entity = entity;
+  render();
+  $("#sidebar").classList.remove("open");
+  $("#menu-toggle").setAttribute("aria-expanded", "false");
+  $("#main").focus({ preventScroll: true });
+}
+
+function filtersHTML(withSearch = false) {
+  const sources = [
+    ...(filters.kind !== "project"
+      ? state.services.map(item => [item.id, "Processo · " + item.name]) : []),
+    ...(filters.kind !== "process"
+      ? state.projects.map(item => [item.id, "Projeto · " + item.name]) : [])
+  ];
+
+  return `<section class="panel filters" aria-label="Filtros de riscos">
+    ${withSearch ? `<div class="search">
+      <label for="risk-search">Buscar riscos</label>
+      <input id="risk-search" data-filter="search" type="search"
+        value="${escapeHTML(filters.search)}"
+        placeholder="Atividade, risco, causa, consequência ou origem">
+    </div>
+    <div class="sort">
+      <label for="risk-sort">Ordenar por</label>
+      <select id="risk-sort" data-filter="sort">
+        ${options([
+          ["score", "Maior severidade"],
+          ["recent", "Atualizados recentemente"],
+          ["activity", "Atividade (A–Z)"]
+        ], filters.sort)}
+      </select>
+    </div>` : ""}
+    <div><label for="filter-kind">Unidade de análise</label>
+      <select id="filter-kind" data-filter="kind" ${view !== "dashboard" ? "disabled" : ""}>
+        ${options([["all", "Todos"], ["process", "Processos"], ["project", "Projetos"]], filters.kind)}
+      </select>
+    </div>
+    <div><label for="filter-entity">Serviço ou projeto</label>
+      <select id="filter-entity" data-filter="entity">
+        ${options(sources, filters.entity, "Todos os vínculos")}
+      </select>
+    </div>
+    <div><label for="filter-typology">Tipologia</label>
+      <select id="filter-typology" data-filter="typology">
+        ${options(MODEL.types, filters.typology, "Todas")}
+      </select>
+    </div>
+    <div><label for="filter-severity">Severidade</label>
+      <select id="filter-severity" data-filter="severity">
+        ${options(MODEL.bands.map(b => b.name), filters.severity, "Todas")}
+      </select>
+    </div>
+    <button data-cmd="clear-filters">Limpar filtros</button>
+  </section>`;
+}
+
+/* Renderização com preservação dos rascunhos de ações, detalhes abertos e foco */
+function render() {
+  const drafts = $$("form[data-action-form]").map(form => ({
+    riskId: form.dataset.actionForm,
+    values: Object.fromEntries(new FormData(form))
+  }));
+  const opened = $$("details.plan[open]").map(item => item.id);
+  const active = document.activeElement;
+  const activeId = active?.id;
+  const activeData = active?.tagName === "BUTTON" ? Object.entries(active.dataset) : [];
+
+  renderHeader();
+  renderSidebar();
+
+  const notice = loadMessage ? `<div class="notice">${escapeHTML(loadMessage)}</div>` : "";
+  const main = $("#main");
+
+  if (view === "dashboard") {
+    main.innerHTML = notice + `
+      <div class="heading">
+        <div><div class="eyebrow">Visão consolidada</div>
+          <h2>Dashboard Executivo</h2>
+          <p>Prioridades, exposição a riscos e execução dos planos.</p>
+        </div>
+        <button class="primary" data-cmd="new-risk">+ Novo risco</button>
+      </div>${filtersHTML()}<div id="results"></div>`;
+    renderResults();
+  } else if (view === "processes" || view === "projects") {
+    const projects = view === "projects";
+    main.innerHTML = notice + `
+      <div class="heading">
+        <div><div class="eyebrow">Mapeamento e acompanhamento</div>
+          <h2>${projects ? "Projetos & Iniciativas" : "Processos & Serviços"}</h2>
+          <p>${projects ? "Acompanhe iniciativas e riscos vinculados." : "Organize os serviços e seus riscos."}</p>
+        </div>
+        <div class="buttons">
+          <button data-cmd="${projects ? "new-project" : "new-service"}">
+            + ${projects ? "Novo projeto" : "Novo serviço"}
+          </button>
+          <button class="primary" data-cmd="new-risk">+ Novo risco</button>
+        </div>
+      </div><div id="entities"></div>${filtersHTML(true)}<div id="results"></div>`;
+    renderEntities();
+    renderResults();
+  } else if (view === "settings") {
+    renderSettings();
+  } else {
+    renderData();
+  }
+
+  for (const draft of drafts) {
+    const form = $(`form[data-action-form="${draft.riskId}"]`);
+    if (!form) continue;
+    for (const [key, value] of Object.entries(draft.values)) {
+      if (form.elements.namedItem(key)) form.elements.namedItem(key).value = value;
+    }
+  }
+
+  for (const id of opened) {
+    const detail = document.getElementById(id);
+    if (detail) detail.open = true;
+  }
+
+  if (!$("#modal").open) {
+    const target = activeId ? document.getElementById(activeId)
+      : activeData.length ? $$("button").find(button =>
+        activeData.every(([key, value]) => button.dataset[key] === value)
+      ) : null;
+    target?.focus({ preventScroll: true });
+  }
+}
+
+function renderResults() {
+  const target = $("#results");
+  if (!target) return;
+  const risks = selectedRisks();
+
+  if (view === "dashboard") {
+    target.innerHTML = dashboardHTML(risks);
+  } else {
+    target.innerHTML = `<h3>${numberBR(risks.length)} risco(s) no contexto</h3>
+      <div class="risk-list">${risks.length
+        ? risks.map(riskCard).join("")
+        : emptyMessage("Nenhum risco encontrado. Cadastre um risco ou ajuste os filtros.")}
+      </div>`;
+  }
+}
+
+function heatMapHTML(risks) {
+  const rows = [5, 4, 3, 2, 1].map(p => {
+    const cells = [1, 2, 3, 4, 5].map(i => {
+      const count = risks.filter(r => r.probability === p && r.impact === i).length;
+      const band = bandOfScore(p * i);
+      return `<td><button class="heat-cell ${band.css}${count ? "" : " zero"}"
+        data-drill="cell" data-value="${p}-${i}"
+        aria-label="Probabilidade ${p}, impacto ${i}, nível ${band.name}: ${count} risco(s)">${count}</button></td>`;
+    }).join("");
+
+    return `<tr><th scope="row">${p}<span class="lbl"> · ${MODEL.probability[p - 1]}</span></th>${cells}</tr>`;
+  }).join("");
+
+  return `<section class="panel" style="margin-bottom:20px">
+    <h3>Matriz de calor · probabilidade × impacto</h3>
+    <div class="table-wrap"><table class="heat">
+      <caption>Linhas: probabilidade. Colunas: impacto. Cada célula mostra a quantidade de riscos; selecione para ver o detalhamento.</caption>
+      <thead><tr><th scope="col"><span class="lbl">Prob. ↓ · Impacto →</span></th>
+        ${MODEL.impact.map((label, i) =>
+          `<th scope="col">${i + 1}<span class="lbl"><br>${label}</span></th>`).join("")}
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+  </section>`;
+}
+
+function dashboardHTML(risks) {
+  const actions = actionRows(risks);
+  const completed = actions.filter(row => row.action.status === "Concluída");
+  const critical = risks.filter(risk => riskScore(risk) >= MODEL.critical);
+  const noAction = critical.filter(risk => !risk.actions.length);
+  const overdue = actions.filter(row => isLate(row.action));
+  const soon = actions.filter(row => isSoon(row.action));
+  const rate = actions.length ? Math.round(completed.length / actions.length * 100) : 0;
+
+  const metric = (key, label, value, hint, css = "") =>
+    `<button class="metric ${css}" data-drill="${key}">
+      <span>${label}</span><strong>${value}</strong><small>${hint} ↗</small>
+    </button>`;
+
+  return `
+    <section class="metrics" aria-label="Indicadores">
+      ${metric("risks", "Total de Riscos Mapeados", numberBR(risks.length), "Ver riscos do contexto")}
+      ${metric("critical", "Riscos Críticos", numberBR(critical.length), "Pontuação igual ou superior a 10", "critical")}
+      ${metric("actions", "Ações Cadastradas", numberBR(actions.length), "Ver todas as ações")}
+      ${metric("completed", "Taxa de Conclusão", numberBR(rate) + "%", completed.length + " de " + actions.length + " ações", "good")}
+      ${metric("without", "Riscos Críticos Sem Ação", numberBR(noAction.length), "Priorizar tratamento", "critical")}
+      ${metric("overdue", "Ações Atrasadas", numberBR(overdue.length), "Prazos vencidos", "critical")}
+    </section>
+
+    <div class="two-columns">
+      <section class="panel">
+        <h3>Distribuição por severidade</h3>
+        ${MODEL.bands.map(band => {
+          const count = risks.filter(risk => riskBand(risk).name === band.name).length;
+          const percent = risks.length ? count / risks.length * 100 : 0;
+          return `<button class="bar-button" data-drill="severity" data-value="${band.name}">
+            <span>${band.name}</span><span class="track">
+              <span class="fill" style="width:${percent}%;background:${band.color}"></span>
+            </span><strong>${count}</strong></button>`;
+        }).join("")}
+      </section>
+
+      <section class="panel">
+        <h3>Execução dos planos de ação</h3>
+        <div class="mini-grid">${MODEL.actionStatuses.map(status =>
+          `<button class="mini" data-drill="status" data-value="${status}">
+            <span>${status}</span>
+            <strong>${actions.filter(row => row.action.status === status).length}</strong>
+          </button>`).join("")}
+          <button class="mini" data-drill="soon">
+            <span>Vencem em ${MODEL.soonDays} dias</span><strong>${soon.length}</strong>
+          </button>
+        </div>
+      </section>
+    </div>
+
+    ${heatMapHTML(risks)}
+
+    <section class="panel">
+      <div class="row"><h3>Riscos de alta severidade</h3>
+        <span class="badge neutral">${critical.length} risco(s)</span>
+      </div>
+      ${critical.length ? `
+        <div class="table-wrap"><table>
+          <thead><tr><th>Nível</th><th>Origem e atividade</th>
+            <th>Risco e consequência</th><th>Detalhes</th></tr></thead>
+          <tbody>${[...critical].sort(SORTERS.score).map(risk =>
+            `<tr>
+              <td><span class="badge ${riskBand(risk).css}">
+                ${riskScore(risk)} · ${riskBand(risk).name}</span></td>
+              <td><strong>${escapeHTML(sourceOf(risk).name)}</strong>
+                <p class="muted">${escapeHTML(risk.activity)}</p></td>
+              <td><p><strong>Risco:</strong> ${escapeHTML(riskDescription(risk.description))}</p>
+                <p><strong>Consequência:</strong> ${escapeHTML(risk.consequence)}</p></td>
+              <td><button class="small" data-goto="${risk.id}">Ver Risco</button></td>
+            </tr>`).join("")}
+          </tbody>
+        </table></div>` : `<p class="muted">Nenhum risco alto ou extremo no contexto filtrado.</p>`}
+    </section>
+
+    <section class="panel" style="margin-top:20px">
+      <h3>Riscos por tipologia</h3>
+      <div class="mini-grid">${MODEL.types.map(type =>
+        `<button class="mini" data-drill="typology" data-value="${type}">
+          <span>${type}</span><strong>${risks.filter(risk => risk.typology === type).length}</strong>
+        </button>`).join("")}
+      </div>
+    </section>
+
+    ${!risks.length ? `<div style="margin-top:20px">${emptyMessage("O contexto está vazio.")}</div>` : ""}
+    <p class="footnote">Modelo configurado para este painel: probabilidade × impacto.
+      Baixo: 1–4 · Médio: 5–9 · Alto: 10–15 · Extremo: 16–25.
+      Os indicadores e detalhamentos respeitam os filtros ativos.</p>`;
+}
+
+function renderEntities() {
+  const projects = view === "projects";
+  const counts = riskCounts();
+  const list = (projects ? state.projects : state.services)
+    .filter(item => !filters.entity || item.id === filters.entity);
+
+  $("#entities").innerHTML = `<div class="entity-list">${list.map(item => {
+    const count = counts.get(item.id) || 0;
+    return `<article class="panel">
+      <div class="row"><h3>
+        ${!projects ? `<span class="dot" style="background:${item.color}"></span> ` : ""}
+        ${escapeHTML(item.name)}</h3>
+        ${projects ? `<span class="badge neutral">${item.status}</span>` : ""}
+      </div>
+      ${projects ? `<p>${escapeHTML(item.description)}</p>
+        <p class="muted">Responsável: ${escapeHTML(item.owner)}<br>
+        ${dateBR(item.start)} → ${dateBR(item.end)}</p>` : ""}
+      <div class="row">
+        <button class="small" data-entity="${item.id}">${count} risco(s) · visualizar</button>
+        <div class="buttons">
+          <button class="small" data-edit-entity="${item.id}"
+            data-kind="${projects ? "project" : "process"}">Editar</button>
+          <button class="small danger" data-delete-entity="${item.id}"
+            data-kind="${projects ? "project" : "process"}">Excluir</button>
+        </div>
+      </div>
+    </article>`;
+  }).join("")}</div>` + (list.length ? "" : emptyMessage(
+    projects ? "Nenhum projeto cadastrado." : "Nenhum serviço cadastrado.",
+    projects ? "Novo projeto" : "Novo serviço",
+    projects ? "new-project" : "new-service"
+  ));
+}
+
+function scaleInput(risk, key, label) {
+  return `<div><label for="${key}-${risk.id}">${label}</label>
+    <select id="${key}-${risk.id}" data-scale="${key}" data-risk="${risk.id}">
+      ${options(scaleOptions(key), risk[key])}
+    </select></div>`;
+}
+
+function riskCard(risk) {
+  const band = riskBand(risk);
+  return `<article class="risk-card" id="risk-${risk.id}" tabindex="-1"
+      style="border-left-color:${band.color}">
+    <div class="row">
+      <span class="badge neutral">
+        ${risk.linkType === "process" ? "Processo" : "Projeto"} · ${escapeHTML(sourceOf(risk).name)}
+      </span>
+      <div class="buttons">
+        <button class="small" data-edit-risk="${risk.id}">Editar risco</button>
+        <button class="small danger" data-delete-risk="${risk.id}">Excluir risco</button>
+      </div>
+    </div>
+
+    <h3>${escapeHTML(risk.activity)}</h3>
+    <p><strong>Risco:</strong> ${escapeHTML(riskDescription(risk.description))}</p>
+    <p><strong>Causa provável:</strong> ${escapeHTML(risk.cause)}</p>
+    <p class="consequence"><strong>Dano ou consequência:</strong> ${escapeHTML(risk.consequence)}</p>
+
+    <div class="risk-meta">
+      <span class="badge neutral">${risk.typology}</span>
+      <span class="badge neutral">Tratamento: ${risk.treatment}</span>
+    </div>
+
+    <div class="score-row">
+      ${scaleInput(risk, "probability", "Probabilidade")}
+      ${scaleInput(risk, "impact", "Impacto")}
+      <div class="score ${band.css}" aria-live="polite">${riskScore(risk)} · ${band.name}</div>
+    </div>
+
+    <p class="metadata">${escapeHTML(risk.id)} · Criado em ${dateTimeBR(risk.createdAt)}
+      · Atualizado em ${dateTimeBR(risk.updatedAt)}</p>
+
+    <details class="plan" id="plan-${risk.id}">
+      <summary>Plano de Ações e Execução · ${risk.actions.length} ação(ões)</summary>
+      ${actionsHTML(risk)}
+      ${newActionForm(risk)}
+    </details>
+  </article>`;
+}
+
+function actionsHTML(risk) {
+  const completed = risk.actions.filter(action => action.status === "Concluída").length;
+  const percent = risk.actions.length ? Math.round(completed / risk.actions.length * 100) : 0;
+
+  return `<div class="progress">
+    <progress value="${percent}" max="100" aria-label="Progresso do plano"></progress>
+    <span>${percent}% · ${completed}/${risk.actions.length} concluídas</span>
+  </div>` + (risk.actions.length ? risk.actions.map(action =>
+    `<div class="action-item" id="action-${action.id}" tabindex="-1">
+      <p><strong>${escapeHTML(action.description)}</strong></p>
+      <p class="muted">${escapeHTML(action.owner)} · Prazo: ${dateBR(action.due)}</p>
+      ${isLate(action) ? '<p class="overdue">Atrasada · prazo vencido</p>' : ""}
+      ${isSoon(action) ? `<p class="soon">Vence em até ${MODEL.soonDays} dias</p>` : ""}
+      <div class="buttons">
+        <label for="status-${action.id}">Status</label>
+        <select id="status-${action.id}" data-action-status="${action.id}" data-risk="${risk.id}">
+          ${options(MODEL.actionStatuses, action.status)}
+        </select>
+        <button class="small" data-edit-action="${action.id}" data-risk="${risk.id}">Editar ação</button>
+        <button class="small danger" data-delete-action="${action.id}" data-risk="${risk.id}">Remover ação</button>
+      </div>
+    </div>`).join("") : '<p class="muted">Nenhuma ação cadastrada</p>');
+}
+
+function newActionForm(risk) {
+  const prefix = "add-" + risk.id;
+  return `<form class="action-form" data-action-form="${risk.id}" novalidate>
+    <h4 style="margin:0 0 14px">Adicionar ação</h4>
+    <div class="form-grid">
+      ${field("description", "Descrição da ação", "", "textarea", true, prefix)}
+      ${field("owner", "Responsável", "", "text", true, prefix)}
+      ${field("due", "Prazo", "", "date", true, prefix)}
+      ${selectField("status", "Status", MODEL.actionStatuses, "Pendente", prefix)}
+    </div>
+    <div class="form-footer"><button class="primary" type="submit">Adicionar ação</button></div>
+  </form>`;
+}
+
+/* =====================================================================
+   9. MODAIS E FORMULÁRIOS
+   ===================================================================== */
+function openModal(title, html) {
+  const dialog = $("#modal");
+  if (!dialog.open) modalOpener = document.activeElement;
+
+  $("#modal-title").textContent = title;
+  $("#modal-body").innerHTML = html;
+  if (!dialog.open) dialog.showModal();
+
+  const focus = $("#modal-body input, #modal-body select, #modal-body textarea");
+  (focus || $('[data-cmd="close-modal"]', dialog)).focus();
+}
+
+function restoreModalFocus() {
+  if (modalOpener?.isConnected) modalOpener.focus({ preventScroll: true });
+  else $("#main").focus({ preventScroll: true });
+  modalOpener = null;
+}
+
+function closeModal() {
+  if ($("#modal").open) {
+    $("#modal").close();
+    restoreModalFocus();
+  }
+}
+
+$("#modal").addEventListener("close", () => {
+  if (modalOpener) restoreModalFocus();
+});
+
+$("#modal").addEventListener("keydown", event => {
+  if (event.key !== "Tab") return;
+  const elements = $$(
+    'button,input,textarea,select,a[href],[tabindex="0"]', $("#modal")
+  ).filter(item => !item.disabled && item.getClientRects().length);
+  const first = elements[0];
+  const last = elements[elements.length - 1];
+
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+});
+
+function confirmModal(title, message, callback, label = "Confirmar", extra = "") {
+  openModal(title, `<p>${escapeHTML(message)}</p>${extra}
+    <div class="form-footer">
+      <button data-cmd="close-modal">Cancelar</button>
+      <button class="danger" id="confirm-action">${escapeHTML(label)}</button>
+    </div>`);
+  $("#confirm-action").onclick = callback;
+  $('[data-cmd="close-modal"]', $("#modal-body")).focus();
+}
+
+function setFieldError(element, message) {
+  element.setAttribute("aria-invalid", "true");
+  element.setAttribute("aria-describedby", element.id + "-error");
+  const target = document.getElementById(element.id + "-error");
+  if (target) target.textContent = message;
+}
+
+function formValues(form) {
+  return Object.fromEntries([...new FormData(form)].map(
+    ([key, value]) => [key, typeof value === "string" ? value.trim() : value]
+  ));
+}
+
+function validateForm(form) {
+  $$(".field-error", form).forEach(item => item.textContent = "");
+  $$("[aria-invalid]", form).forEach(item => item.removeAttribute("aria-invalid"));
+
+  const invalid = [];
+
+  for (const element of $$("input,textarea,select", form)) {
+    let message = "";
+    if (element.required && !element.value.trim()) {
+      message = "Preencha este campo.";
+    } else if (!element.validity.valid) {
+      message = element.type === "date" ? "Informe uma data válida." : "Revise este valor.";
+    }
+
+    if (form.id === "risk-form" && element.name === "description" &&
+        !riskDescription(element.value)) {
+      message = "Informe a descrição do risco.";
+    }
+
+    if (message) {
+      setFieldError(element, message);
+      invalid.push(element);
+    }
+  }
+
+  if (invalid.length) {
+    let summary = $(".form-message", form);
+    if (!summary) {
+      summary = document.createElement("div");
+      summary.className = "form-message";
+      summary.setAttribute("role", "alert");
+      summary.tabIndex = -1;
+      form.insertBefore(summary, $(".form-footer", form));
+    }
+
+    summary.replaceChildren();
+
+    const title = document.createElement("strong");
+    title.textContent = "Os dados ainda não foram salvos. Revise:";
+    summary.append(title);
+
+    const list = document.createElement("ul");
+    invalid.forEach(element => {
+      const item = document.createElement("li");
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "small";
+      button.textContent = element.labels?.[0]?.textContent || element.name;
+      button.onclick = () => element.focus();
+      item.append(button);
+      list.append(item);
+    });
+
+    summary.append(list);
+    summary.focus({ preventScroll: true });
+    summary.scrollIntoView({ block: "nearest" });
+    return false;
+  }
+
+  $(".form-message", form)?.remove();
+  return true;
+}
+
+function entityForm(kind, id = "") {
+  const project = kind === "project";
+  const list = project ? state.projects : state.services;
+  const existing = list.find(item => item.id === id);
+
+  const item = existing || {
+    name: "", color: "#454ca7", owner: "", description: "",
+    start: localDate(), end: localDate(), status: "Planejado"
+  };
+
+  openModal((existing ? "Editar " : "Novo ") + (project ? "projeto / iniciativa" : "serviço / macroprocesso"),
+    `<form id="entity-form" novalidate>
+      <div class="form-grid">
+        ${field("name", "Nome", item.name, "text", true)}
+        ${project
+          ? field("owner", "Responsável", item.owner, "text", true)
+          : field("color", "Cor", item.color, "color", true)}
+        ${project ? `
+          ${field("description", "Objetivo ou descrição", item.description, "textarea", true)}
+          ${field("start", "Data inicial", item.start, "date", true)}
+          ${field("end", "Prazo final", item.end, "date", true)}
+          ${selectField("status", "Status", MODEL.projectStatuses, item.status)}
+        ` : ""}
+      </div>
+      <div class="form-footer">
+        <button type="button" data-cmd="close-modal">Cancelar</button>
+        <button type="submit" class="primary">Salvar ${project ? "projeto" : "serviço"}</button>
+      </div>
+    </form>`);
+
+  $("#entity-form").onsubmit = event => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    if (!validateForm(form)) return;
+
+    const values = formValues(form);
+    if (project && values.end < values.start) {
+      setFieldError(form.elements.end, "O prazo final deve ser igual ou posterior à data inicial.");
+      form.elements.end.focus();
+      return;
+    }
+
+    if (existing && Object.keys(values).every(key => existing[key] === values[key])) {
+      closeModal();
+      return;
+    }
+
+    if (existing) Object.assign(existing, values);
+    else list.push({ id: uid(), ...values, demo: false });
+
+    commit(project ? "Projeto salvo." : "Serviço salvo.");
+    closeModal();
+    render();
+  };
+}
+
+function deleteEntity(kind, id) {
+  const list = kind === "project" ? state.projects : state.services;
+  const item = list.find(entry => entry.id === id);
+  const linked = state.risks.filter(risk => risk.linkId === id);
+  const alternatives = list.filter(entry => entry.id !== id);
+
+  confirmModal(
+    "Excluir " + (kind === "project" ? "projeto" : "serviço"),
+    linked.length
+      ? `“${item.name}” possui ${linked.length} risco(s). Transfira-os para outro destino ou exclua-os junto com o registro.`
+      : `Excluir “${item.name}”?`,
+    () => {
+      const target = $("#transfer-target")?.value;
+      if (linked.length && !target) return;
+
+      const before = snapshot();
+      const removeRisks = target === DELETE_WITH_RISKS;
+
+      if (removeRisks) {
+        state.risks = state.risks.filter(risk => risk.linkId !== id);
+      } else {
+        linked.forEach(risk => {
+          risk.linkId = target;
+          risk.updatedAt = now();
+        });
+      }
+
+      list.splice(list.findIndex(entry => entry.id === id), 1);
+      if (filters.entity === id) filters.entity = "";
+
+      commit(removeRisks
+        ? "Registro e riscos vinculados excluídos."
+        : "Registro excluído. Vínculos preservados.", null, undoTo(before));
+      closeModal();
+      render();
+    },
+    linked.length ? "Confirmar e excluir" : "Excluir",
+    linked.length ? `<label for="transfer-target">Destino dos riscos</label>
+      <select id="transfer-target">
+        ${options([
+          ...alternatives.map(entry => [entry.id, "Transferir para: " + entry.name]),
+          [DELETE_WITH_RISKS, "Excluir também os riscos vinculados"]
+        ], "", "Selecione uma opção")}
+      </select>` : ""
+  );
+
+  if (linked.length) {
+    $("#confirm-action").disabled = true;
+    $("#transfer-target").onchange = event => {
+      $("#confirm-action").disabled = !event.target.value;
+    };
+  }
+}
+
+function riskForm(id = "") {
+  const existing = findRisk(id);
+  const selectedProject = state.projects.some(item => item.id === filters.entity);
+  const selectedService = state.services.some(item => item.id === filters.entity);
+
+  const initialType = selectedProject ? "project" : selectedService ? "process"
+    : filters.kind === "project" ? "project"
+    : !state.services.length && state.projects.length ? "project" : "process";
+
+  const risk = existing || {
+    linkType: initialType,
+    linkId: filters.entity,
+    activity: "", description: "", cause: "", consequence: "",
+    typology: MODEL.types[0],
+    treatment: MODEL.treatments[0],
+    probability: 1, impact: 1
+  };
+
+  openModal(existing ? "Editar risco" : "Cadastrar risco", `
+    <form id="risk-form" novalidate>
+      <p class="help">Os campos com * são obrigatórios.</p>
+      <div class="form-grid">
+        ${selectField("linkType", "Tipo de vínculo",
+          [["process", "Processo / serviço"], ["project", "Projeto / iniciativa"]],
+          risk.linkType)}
+        <div>
+          <label for="f-linkId">Serviço ou projeto vinculado *</label>
+          <select id="f-linkId" name="linkId" required></select>
+          <div class="field-error" id="f-linkId-error"></div>
+          <p class="help" id="source-help"></p>
+        </div>
+        ${field("activity", "Atividade", risk.activity, "text", true)}
+        ${field("description", "Descrição do risco", risk.description, "textarea", true)}
+        ${field("cause", "Causa provável", risk.cause, "textarea", true)}
+        ${field("consequence", "Dano ou consequência", risk.consequence, "textarea", true)}
+        ${selectField("typology", "Tipologia", MODEL.types, risk.typology)}
+        ${selectField("treatment", "Estratégia de tratamento", MODEL.treatments, risk.treatment)}
+        ${selectField("probability", "Probabilidade", scaleOptions("probability"), risk.probability)}
+        ${selectField("impact", "Impacto", scaleOptions("impact"), risk.impact)}
+        <p class="full badge neutral" id="form-score" aria-live="polite"></p>
+      </div>
+      <div class="form-footer">
+        <button type="button" data-cmd="close-modal">Cancelar</button>
+        <button type="submit" class="primary">Salvar risco</button>
+      </div>
+    </form>`);
+
+  const form = $("#risk-form");
+  const get = name => form.elements.namedItem(name);
+
+  function populateSources() {
+    const list = get("linkType").value === "process" ? state.services : state.projects;
+    const selected = list.some(item => item.id === risk.linkId)
+      ? risk.linkId : list.length === 1 ? list[0].id : "";
+
+    get("linkId").innerHTML = options(
+      list.map(item => [item.id, item.name]), selected,
+      list.length ? "Selecione o vínculo" : "Nenhum vínculo cadastrado"
+    );
+    get("linkId").value = selected;
+
+    $("#source-help").textContent = list.length
+      ? "Selecione a origem deste risco."
+      : "Cadastre primeiro um serviço ou projeto, ou selecione outro tipo de vínculo.";
+  }
+
+  function updatePreview() {
+    const score = Number(get("probability").value) * Number(get("impact").value);
+    $("#form-score").textContent = "Nível calculado: " + score + " · " + bandOfScore(score).name;
+  }
+
+  populateSources();
+  updatePreview();
+  get("linkType").onchange = populateSources;
+  get("probability").onchange = updatePreview;
+  get("impact").onchange = updatePreview;
+
+  form.onsubmit = event => {
+    event.preventDefault();
+    if (!validateForm(form)) return;
+
+    const values = formValues(form);
+    values.probability = Number(values.probability);
+    values.impact = Number(values.impact);
+    values.description = riskDescription(values.description);
+
+    const list = values.linkType === "process" ? state.services : state.projects;
+    if (!list.some(item => item.id === values.linkId)) {
+      setFieldError(get("linkId"), "Selecione um vínculo válido.");
+      get("linkId").focus();
+      return;
+    }
+
+    if (existing && Object.keys(values).every(key => existing[key] === values[key])) {
+      closeModal();
+      goToRisk(existing.id);
+      return;
+    }
+
+    const stamp = now();
+    const savedId = existing?.id || uid();
+
+    if (existing) Object.assign(existing, values, { updatedAt: stamp });
+    else state.risks.push({
+      id: savedId, ...values, createdAt: stamp, updatedAt: stamp,
+      actions: [], demo: false
+    });
+
+    commit("Risco salvo.");
+    closeModal();
+    goToRisk(savedId);
+  };
+}
+
+function editAction(riskId, actionId) {
+  const risk = findRisk(riskId);
+  const action = risk.actions.find(item => item.id === actionId);
+
+  openModal("Editar ação", `<form id="action-edit" novalidate>
+    <div class="form-grid">
+      ${field("description", "Descrição", action.description, "textarea", true)}
+      ${field("owner", "Responsável", action.owner, "text", true)}
+      ${field("due", "Prazo", action.due, "date", true)}
+      ${selectField("status", "Status", MODEL.actionStatuses, action.status)}
+    </div>
+    <div class="form-footer">
+      <button type="button" data-cmd="close-modal">Cancelar</button>
+      <button type="submit" class="primary">Salvar ação</button>
+    </div>
+  </form>`);
+
+  $("#action-edit").onsubmit = event => {
+    event.preventDefault();
+    if (!validateForm(event.currentTarget)) return;
+    const values = formValues(event.currentTarget);
+
+    if (Object.keys(values).every(key => action[key] === values[key])) {
+      closeModal();
+      return;
+    }
+
+    Object.assign(action, values);
+    commit("Ação atualizada.", risk);
+    closeModal();
+    render();
+  };
+}
+
+/* =====================================================================
+   10. DETALHAMENTOS E NAVEGAÇÃO ATÉ UM RISCO
+   ===================================================================== */
+function drill(key, value = "") {
+  const risks = selectedRisks();
+  const actions = actionRows(risks);
+  let title = "";
+  let items = [];
+  let isAction = false;
+
+  switch (key) {
+    case "risks":
+      title = "Total de Riscos Mapeados";
+      items = risks;
+      break;
+    case "critical":
+      title = "Riscos Críticos · pontuação ≥ 10";
+      items = risks.filter(risk => riskScore(risk) >= MODEL.critical);
+      break;
+    case "without":
+      title = "Riscos Críticos Sem Ação";
+      items = risks.filter(risk => riskScore(risk) >= MODEL.critical && !risk.actions.length);
+      break;
+    case "severity":
+      title = "Severidade · " + value;
+      items = risks.filter(risk => riskBand(risk).name === value);
+      break;
+    case "typology":
+      title = "Tipologia · " + value;
+      items = risks.filter(risk => risk.typology === value);
+      break;
+    case "cell": {
+      const [p, i] = value.split("-").map(Number);
+      title = `Probabilidade ${p} · Impacto ${i}`;
+      items = risks.filter(risk => risk.probability === p && risk.impact === i);
+      break;
+    }
+    case "actions":
+      title = "Ações Cadastradas";
+      items = actions;
+      isAction = true;
+      break;
+    case "completed":
+      title = "Ações concluídas";
+      items = actions.filter(item => item.action.status === "Concluída");
+      isAction = true;
+      break;
+    case "overdue":
+      title = "Ações Atrasadas";
+      items = actions.filter(item => isLate(item.action));
+      isAction = true;
+      break;
+    case "soon":
+      title = `Ações com prazo nos próximos ${MODEL.soonDays} dias`;
+      items = actions.filter(item => isSoon(item.action));
+      isAction = true;
+      break;
+    case "status":
+      title = "Ações · " + value;
+      items = actions.filter(item => item.action.status === value);
+      isAction = true;
+      break;
+  }
+
+  openModal(title, `
+    <p><strong>${items.length} registro(s)</strong> · filtros do dashboard aplicados</p>
+    ${key === "completed" ? `<p>${items.length} de ${actions.length} ações concluídas
+      (${actions.length ? Math.round(items.length / actions.length * 100) : 0}%).</p>` : ""}
+    <div class="detail-list">${items.length ? items.map(item => {
+      const risk = isAction ? item.risk : item;
+      const action = isAction ? item.action : null;
+      return `<article class="detail-item">
+        <span class="badge ${riskBand(risk).css}">${riskScore(risk)} · ${riskBand(risk).name}</span>
+        <h3>${escapeHTML(action ? action.description : risk.activity)}</h3>
+        <p class="muted">${escapeHTML(sourceOf(risk).name)}</p>
+        <p>${action
+          ? `${escapeHTML(action.owner)} · ${dateBR(action.due)} · ${action.status}${isLate(action) ? " · Atrasada" : ""}`
+          : "Risco: " + escapeHTML(riskDescription(risk.description))}</p>
+        <button data-goto="${risk.id}" ${action ? `data-action="${action.id}"` : ""}>Ver no Painel</button>
+      </article>`;
+    }).join("") : '<p class="empty">Nenhum registro encontrado neste contexto.</p>'}</div>`);
+}
+
+function goToRisk(id, actionId = "") {
+  const risk = findRisk(id);
+  if (!risk) return;
+
+  closeModal();
+  navigate(risk.linkType === "process" ? "processes" : "projects", risk.linkId);
+
+  if (actionId) $("#plan-" + id).open = true;
+
+  setTimeout(() => {
+    const target = document.getElementById(actionId ? "action-" + actionId : "risk-" + id);
+    if (!target) return;
+    target.focus({ preventScroll: true });
+    target.scrollIntoView({
+      block: "center",
+      behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"
+    });
+    target.classList.add("highlight");
+    setTimeout(() => target.classList.remove("highlight"), 3500);
+  }, 50);
+}
+
+/* =====================================================================
+   11. CONFIGURAÇÕES
+   ===================================================================== */
+function renderSettings() {
+  $("#main").innerHTML = `
+    <div class="heading"><div>
+      <div class="eyebrow">Identificação institucional</div>
+      <h2>Configurações da Unidade</h2>
+      <p>Personalize o painel para a sua área.</p>
+    </div></div>
+
+    <section class="panel" style="max-width:950px">
+      <form id="unit-form" novalidate>
+        <div class="form-grid">
+          ${field("acronym", "Sigla da unidade", state.unit.acronym)}
+          ${field("name", "Nome completo da unidade", state.unit.name)}
+          ${field("technical", "Responsável técnico", state.unit.technical)}
+          ${field("operator", "Identificação do operador", state.unit.operator)}
+        </div>
+        <p class="help">Campos opcionais. A identificação do operador é informativa e não constitui autenticação.</p>
+        <div class="form-footer"><button type="submit" class="primary">Salvar configurações</button></div>
+      </form>
+    </section>
+
+    <section class="panel" style="max-width:950px;margin-top:20px">
+      <h3>Modelo configurado para este painel</h3>
+      <p>Probabilidade (1–5) × Impacto (1–5). Riscos críticos: pontuação ≥ 10.</p>
+      <div class="buttons">${MODEL.bands.map(band =>
+        `<span class="badge ${band.css}">${band.name}: ${band.min}–${band.max}</span>`
+      ).join("")}</div>
+      <p><strong>Probabilidade:</strong> ${scaleOptions("probability").map(([, label]) => label).join("; ")}.</p>
+      <p><strong>Impacto:</strong> ${scaleOptions("impact").map(([, label]) => label).join("; ")}.</p>
+      <p><strong>Tipologias:</strong> ${MODEL.types.join(", ")}.</p>
+      <p><strong>Tratamentos:</strong> ${MODEL.treatments.join(", ")}.</p>
+      <p class="help">Este modelo não é apresentado como metodologia oficial da AGU. A aplicação institucional depende de validação e documentação da unidade.</p>
+    </section>`;
+
+  $("#f-acronym").maxLength = 40;
+
+  $("#unit-form").onsubmit = event => {
+    event.preventDefault();
+    if (!validateForm(event.currentTarget)) return;
+    const values = formValues(event.currentTarget);
+
+    if (Object.keys(values).every(key => state.unit[key] === values[key])) {
+      toast("Nenhuma alteração nos dados.");
+      return;
+    }
+
+    state.unit = values;
+    commit("Configurações salvas.");
+    renderSidebar();
+  };
+}
+
+/* =====================================================================
+   12. IMPORTAÇÃO E EXPORTAÇÃO
+   ===================================================================== */
+function downloadFile(name, content, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = name;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+function fileStem() {
+  const acronym = (state.unit.acronym || "UNIDADE")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9_-]/g, "_");
+  return `riscos-${acronym}-${localDate()}`;
+}
+
+function markExported() {
+  lastExport = now();
+  try { localStorage.setItem(EXPORT_KEY, lastExport); } catch {}
+  renderHeader();
+}
+
+function exportBackup() {
+  const data = { ...state, exportedAt: now() };
+  downloadFile(fileStem() + ".json", JSON.stringify(data, null, 2),
+    "application/json;charset=utf-8");
+  markExported();
+  toast("Backup JSON gerado.");
+  if ($("#main .tools")) renderData();
+}
+
+/* CSV para Excel: separador ";", BOM UTF-8 e proteção contra injeção de fórmulas. */
+function csvCell(value) {
+  let text = String(value ?? "");
+  if (/^[=+\-@\t\r]/.test(text)) text = "'" + text;
+  return '"' + text.replace(/"/g, '""') + '"';
+}
+
+function exportCSV() {
+  const header = [
+    "Tipo de origem", "Origem", "Atividade", "Risco", "Causa provável",
+    "Dano ou consequência", "Tipologia", "Tratamento", "Probabilidade",
+    "Impacto", "Pontuação", "Severidade", "Ação", "Responsável pela ação",
+    "Prazo da ação", "Status da ação", "Ação atrasada"
+  ];
+
+  const rows = [];
+
+  for (const risk of [...state.risks].sort(SORTERS.score)) {
+    const base = [
+      risk.linkType === "process" ? "Processo" : "Projeto",
+      sourceOf(risk).name, risk.activity, riskDescription(risk.description),
+      risk.cause, risk.consequence, risk.typology, risk.treatment,
+      risk.probability, risk.impact, riskScore(risk), riskBand(risk).name
+    ];
+
+    if (!risk.actions.length) rows.push([...base, "", "", "", "", ""]);
+    else for (const action of risk.actions) {
+      rows.push([
+        ...base, action.description, action.owner, dateBR(action.due),
+        action.status, isLate(action) ? "Sim" : "Não"
+      ]);
+    }
+  }
+
+  const csv = "\ufeff" + [header, ...rows]
+    .map(row => row.map(csvCell).join(";")).join("\r\n");
+
+  downloadFile(fileStem() + ".csv", csv, "text/csv;charset=utf-8");
+  toast("Planilha CSV gerada (" + rows.length + " linha(s)).");
+}
+
+function renderData() {
+  $("#main").innerHTML = `
+    ${loadMessage ? `<div class="notice">${escapeHTML(loadMessage)}</div>` : ""}
+    <div class="heading"><div>
+      <div class="eyebrow">Preservação dos registros</div>
+      <h2>Ferramentas de Dados</h2>
+      <p>Exporte cópias e restaure a base da unidade.</p>
+    </div></div>
+
+    <div class="tools">
+      <section class="panel">
+        <h3>Backup e restauração</h3>
+        <p>O salvamento automático depende deste navegador e pode ficar indisponível ou ser apagado.
+          O backup JSON é necessário para transportar e preservar os dados.</p>
+        <p><strong>Último backup:</strong> ${lastExport ? dateTimeBR(lastExport) : "nunca exportado"}
+          ${backupPending() ? '<span class="backup-warn"> · há alterações posteriores</span>' : ""}</p>
+        <div class="buttons">
+          <button class="primary" data-cmd="export">Exportar Backup JSON</button>
+          <button data-cmd="import">Importar JSON</button>
+          <input type="file" id="import-file" accept=".json,application/json" hidden>
+        </div>
+        <p class="help">A importação substitui a base após validação e confirmação.
+          Limite de arquivo: 20 MB. Versão do esquema: ${SCHEMA_VERSION}.</p>
+        <p id="import-feedback" class="field-error" role="status"></p>
+      </section>
+
+      <section class="panel">
+        <h3>Planilha (CSV)</h3>
+        <p>Exporta todos os riscos, um por linha de ação, para abrir no Excel ou em outra planilha.
+          Serve para análise; para restaurar dados use o backup JSON.</p>
+        <button data-cmd="export-csv">Exportar CSV</button>
+      </section>
+
+      <section class="panel">
+        <h3>Armazenamento atual</h3>
+        <p><strong>${escapeHTML(storageStatus)}</strong><br>
+          Última alteração: ${dateTimeBR(state.lastModified)}</p>
+        <button data-cmd="retry-save" ${storageBlocked ? "disabled" : ""}>
+          Tentar salvar neste navegador
+        </button>
+        <p class="help">Esta versão não oferece sincronização, colaboração simultânea ou controle de acesso.
+          Alterações feitas em outra aba do mesmo navegador são acompanhadas automaticamente.
+          A conexão com SharePoint não está configurada.</p>
+      </section>
+
+      <section class="panel">
+        <h3>Relatório em PDF</h3>
+        <p>Gere um relatório com os riscos, indicadores e planos de ação.</p>
+        <button data-cmd="pdf">Gerar PDF</button>
+      </section>
+    </div>`;
+
+  $("#import-file").onchange = event => {
+    const file = event.target.files[0];
+    if (file) importBackup(file);
+    event.target.value = "";
+  };
+}
+
+async function importBackup(file) {
+  try {
+    if (file.size > 20 * 1024 * 1024) throw new Error("Arquivo acima do limite de 20 MB.");
+
+    let raw;
+    try { raw = JSON.parse(await file.text()); }
+    catch { throw new Error("O arquivo não contém JSON válido."); }
+
+    const next = removeLegacyExamples(validateState(raw, true));
+    const actionCount = next.risks.reduce((sum, risk) => sum + risk.actions.length, 0);
+
+    openModal("Confirmar importação", `
+      <p>O arquivo foi validado. A importação <strong>substituirá todos os dados atuais</strong>.</p>
+      <p>${escapeHTML(next.unit.acronym || "UNIDADE")} · ${escapeHTML(next.unit.name)}</p>
+      <ul>
+        <li>${next.services.length} serviços</li>
+        <li>${next.projects.length} projetos</li>
+        <li>${next.risks.length} riscos</li>
+        <li>${actionCount} ações</li>
+      </ul>
+      <p>Você pode exportar os dados atuais antes da substituição.</p>
+      <button id="export-before-import">Exportar dados atuais</button>
+      <div class="form-footer">
+        <button data-cmd="close-modal">Cancelar</button>
+        <button class="primary" id="apply-import">Substituir dados e importar</button>
+      </div>`);
+
+    $("#export-before-import").onclick = exportBackup;
+    $("#apply-import").onclick = () => {
+      const before = snapshot();
+      state = next;
+      storageBlocked = false;
+      loadMessage = "";
+      commit("Backup importado.", null, undoTo(before));
+      markExported();
+      closeModal();
+      navigate("dashboard");
+    };
+  } catch (error) {
+    const message = "Importação recusada: " + error.message +
+      " Os dados atuais foram preservados.";
+    if ($("#import-feedback")) $("#import-feedback").textContent = message;
+    toast(message);
+  }
+}
+
+/* =====================================================================
+   13. PDF
+   ===================================================================== */
+function reportContext(scope) {
+  if (scope === "all") return "Todos os riscos cadastrados.";
+  const source = [...state.services, ...state.projects].find(item => item.id === filters.entity);
+
+  return [
+    "Unidade de análise: " + ({ all: "Todos", process: "Processos", project: "Projetos" }[filters.kind]),
+    "Origem: " + (source?.name || "Todas"),
+    "Tipologia: " + (filters.typology || "Todas"),
+    "Severidade: " + (filters.severity || "Todas"),
+    ...(filters.search ? ["Busca: " + filters.search] : [])
+  ].join(" · ");
+}
+
+function buildReport(settings) {
+  const risks = (settings.scope === "filtered" ? selectedRisks() : [...state.risks])
+    .sort(SORTERS.score);
+
+  const actions = actionRows(risks);
+  const completed = actions.filter(item => item.action.status === "Concluída").length;
+  const critical = risks.filter(risk => riskScore(risk) >= MODEL.critical);
+  const stat = (label, value) => `<div class="print-stat">${label}<strong>${value}</strong></div>`;
+
+  $("#print-area").innerHTML = `
+    <header class="print-head">
+      <h1>Gestão de Riscos Corporativos — ${escapeHTML(state.unit.acronym || "UNIDADE")} / AGU</h1>
+      <p>${escapeHTML(state.unit.name || "Unidade não configurada")}</p>
+      <p class="print-note">Responsável técnico: ${escapeHTML(state.unit.technical || "não informado")}
+        · Operador: ${escapeHTML(state.unit.operator || "não informado")}</p>
+      <p class="print-note">Gerado em ${dateTimeBR(now())}
+        · Última alteração: ${dateTimeBR(state.lastModified)}</p>
+    </header>
+
+    <p><strong>Contexto:</strong> ${escapeHTML(reportContext(settings.scope))}</p>
+
+    <section class="print-stats">
+      ${stat("Riscos mapeados", risks.length)}
+      ${stat("Riscos críticos", critical.length)}
+      ${stat("Ações cadastradas", actions.length)}
+      ${stat("Taxa de conclusão", (actions.length ? Math.round(completed / actions.length * 100) : 0) + "%")}
+      ${stat("Críticos sem ação", critical.filter(risk => !risk.actions.length).length)}
+      ${stat("Ações atrasadas", actions.filter(item => isLate(item.action)).length)}
+    </section>
+
+    ${risks.length ? risks.map(risk => {
+      const source = sourceOf(risk);
+      const done = risk.actions.filter(action => action.status === "Concluída").length;
+
+      return `<article class="print-risk">
+        <p class="print-note">${risk.linkType === "process" ? "Processo / serviço" : "Projeto / iniciativa"}:
+          ${escapeHTML(source.name)}</p>
+        <h2>${escapeHTML(risk.activity)}</h2>
+        <p><strong>${riskScore(risk)} · ${riskBand(risk).name}</strong>
+          — Probabilidade: ${risk.probability} × Impacto: ${risk.impact}</p>
+        <p><strong>Risco:</strong> ${escapeHTML(riskDescription(risk.description))}</p>
+        <p><strong>Causa provável:</strong> ${escapeHTML(risk.cause)}</p>
+        <p><strong>Dano ou consequência:</strong> ${escapeHTML(risk.consequence)}</p>
+        <p><strong>Tipologia:</strong> ${risk.typology} · <strong>Tratamento:</strong> ${risk.treatment}</p>
+        ${risk.linkType === "project" ? `<p class="print-note">
+          Responsável pelo projeto: ${escapeHTML(source.owner)} · ${source.status}
+          · ${dateBR(source.start)} a ${dateBR(source.end)}</p>` : ""}
+        <p class="print-note">ID: ${escapeHTML(risk.id)} · Criado em ${dateTimeBR(risk.createdAt)}
+          · Atualizado em ${dateTimeBR(risk.updatedAt)}</p>
+
+        ${settings.actions ? `
+          <h3>Plano de Ações e Execução</h3>
+          <p>${risk.actions.length} ação(ões) · ${risk.actions.length
+            ? Math.round(done / risk.actions.length * 100) : 0}% concluído</p>
+          ${risk.actions.length ? risk.actions.map(action => `
+            <div class="print-action">
+              <p><strong>${escapeHTML(action.description)}</strong></p>
+              <p>Responsável: ${escapeHTML(action.owner)} · Prazo: ${dateBR(action.due)}</p>
+              <p>Status: ${action.status}${isLate(action) ? " · ATRASADA" : ""}</p>
+              <p class="print-note">ID: ${escapeHTML(action.id)}</p>
+            </div>`).join("") : "<p>Nenhuma ação cadastrada.</p>"}
+        ` : ""}
+      </article>`;
+    }).join("") : "<p>Nenhum risco encontrado no contexto selecionado.</p>"}
+
+    <footer class="print-footer">
+      Modelo configurado para este painel: probabilidade × impacto.
+      Baixo: 1–4; Médio: 5–9; Alto: 10–15; Extremo: 16–25.
+      Riscos críticos: pontuação ≥ 10. Esta metodologia não é apresentada como oficial da AGU.
+      Relatório gerado a partir dos dados locais.
+    </footer>`;
+}
+
+function openPDF() {
+  const contextAvailable = ["dashboard", "processes", "projects"].includes(view);
+
+  openModal("Gerar relatório em PDF", `
+    <p>Na janela de impressão, escolha <strong>Salvar como PDF</strong>.</p>
+    <form id="pdf-form">
+      <label for="pdf-scope">Riscos do relatório</label>
+      <select id="pdf-scope">
+        ${options([
+          ["all", "Todos os riscos (" + state.risks.length + ")"],
+          ...(contextAvailable ? [["filtered", "Contexto filtrado (" + selectedRisks().length + ")"]] : [])
+        ], contextAvailable ? "filtered" : "all")}
+      </select>
+      <label style="display:flex;align-items:center;gap:10px;margin-top:16px" for="pdf-actions">
+        <input id="pdf-actions" type="checkbox" checked>
+        Incluir planos de ação, responsáveis e prazos
+      </label>
+      <p class="help">O relatório usa fundo branco, mesmo com o tema escuro ativado.
+        Para retirar o endereço do arquivo, desative “Cabeçalhos e rodapés” na impressão.</p>
+      <div class="form-footer">
+        <button type="button" data-cmd="close-modal">Cancelar</button>
+        <button type="submit" class="primary">Gerar PDF / imprimir</button>
+      </div>
+    </form>`);
+
+  $("#pdf-form").onsubmit = event => {
+    event.preventDefault();
+    printSettings = {
+      scope: $("#pdf-scope").value,
+      actions: $("#pdf-actions").checked
+    };
+    buildReport(printSettings);
+    preparedPrint = true;
+    closeModal();
+
+    setTimeout(() => {
+      try { window.print(); }
+      catch { toast("Não foi possível abrir a impressão. Use Ctrl+P."); }
+      finally { preparedPrint = false; }
+    }, 100);
+  };
+}
+
+window.addEventListener("beforeprint", () => {
+  if (!preparedPrint) {
+    buildReport({
+      scope: ["dashboard", "processes", "projects"].includes(view) ? "filtered" : "all",
+      actions: true
+    });
+  }
+});
+
+/* =====================================================================
+   14. EVENTOS
+   ===================================================================== */
+document.addEventListener("click", event => {
+  const button = event.target.closest("button");
+  if (!button) return;
+  const data = button.dataset;
+
+  if (data.nav) return navigate(data.nav);
+  if (data.service !== undefined) return navigate("processes", data.service);
+  if (data.goto) return goToRisk(data.goto, data.action);
+  if (data.drill) return drill(data.drill, data.value);
+
+  if (data.entity) {
+    filters.entity = data.entity;
+    render();
+    return;
+  }
+
+  if (data.editEntity) return entityForm(data.kind, data.editEntity);
+  if (data.deleteEntity) return deleteEntity(data.kind, data.deleteEntity);
+  if (data.editRisk) return riskForm(data.editRisk);
+
+  if (data.deleteRisk) {
+    const risk = findRisk(data.deleteRisk);
+
+    confirmModal("Excluir risco e ações",
+      `Excluir “${risk.activity}” e suas ${risk.actions.length} ação(ões)?`,
+      () => {
+        const before = snapshot();
+        state.risks = state.risks.filter(item => item.id !== risk.id);
+        commit("Risco e ações excluídos.", null, undoTo(before));
+        closeModal();
+        render();
+      }, "Excluir risco e ações");
+    return;
+  }
+
+  if (data.editAction) return editAction(data.risk, data.editAction);
+
+  if (data.deleteAction) {
+    const risk = findRisk(data.risk);
+    const action = risk.actions.find(item => item.id === data.deleteAction);
+
+    confirmModal("Remover ação", `Remover “${action.description}”?`, () => {
+      const before = snapshot();
+      risk.actions = risk.actions.filter(item => item.id !== action.id);
+      commit("Ação removida.", risk, undoTo(before));
+      closeModal();
+      render();
+      $("#plan-" + risk.id + " summary")?.focus();
+    }, "Remover ação");
+    return;
+  }
+
+  switch (data.cmd) {
+    case "close-modal": closeModal(); break;
+    case "new-service": entityForm("process"); break;
+    case "new-project": entityForm("project"); break;
+    case "new-risk": riskForm(); break;
+    case "export": exportBackup(); break;
+    case "export-csv": exportCSV(); break;
+    case "import": $("#import-file").click(); break;
+    case "pdf": openPDF(); break;
+    case "retry-save":
+      persist();
+      renderHeader();
+      renderData();
+      toast(storageStatus);
+      break;
+    case "clear-filters":
+      filters = emptyFilters();
+      if (view === "processes") filters.kind = "process";
+      if (view === "projects") filters.kind = "project";
+      render();
+      break;
+  }
+});
+
+document.addEventListener("change", event => {
+  const element = event.target;
+  const data = element.dataset;
+
+  if (data.filter) {
+    filters[data.filter] = element.value;
+
+    if (data.filter === "kind") {
+      filters.entity = "";
+      render();
+    } else {
+      renderResults();
+      if ($("#entities")) renderEntities();
+    }
+
+    document.getElementById(element.id)?.focus({ preventScroll: true });
+    return;
+  }
+
+  if (data.scale) {
+    const risk = findRisk(data.risk);
+    const value = Number(element.value);
+    if (risk[data.scale] === value) return;
+
+    risk[data.scale] = value;
+    commit("Avaliação atualizada.", risk);
+
+    const hiddenByFilter = filters.severity && filters.severity !== riskBand(risk).name;
+    render();
+
+    if (hiddenByFilter) {
+      $("#filter-severity")?.focus({ preventScroll: true });
+      toast("Avaliação atualizada. O risco saiu da faixa de severidade filtrada.");
+    }
+    return;
+  }
+
+  if (data.actionStatus) {
+    const risk = findRisk(data.risk);
+    const action = risk.actions.find(item => item.id === data.actionStatus);
+    if (action.status === element.value) return;
+
+    action.status = element.value;
+    commit("Status da ação atualizado.", risk);
+    render();
+  }
+});
+
+document.addEventListener("input", event => {
+  if (event.target.dataset.filter === "search") {
+    filters.search = event.target.value;
+    renderResults();
+  }
+});
+
+document.addEventListener("submit", event => {
+  const form = event.target;
+  if (!form.dataset.actionForm) return;
+  event.preventDefault();
+
+  if (!validateForm(form)) return;
+
+  const risk = findRisk(form.dataset.actionForm);
+  risk.actions.push({
+    id: uid(),
+    ...formValues(form),
+    demo: false
+  });
+
+  form.reset();
+  commit("Ação adicionada.", risk);
+  render();
+
+  const nextForm = $(`form[data-action-form="${risk.id}"]`);
+  nextForm?.elements.description.focus();
+});
+
+$("#service-search").addEventListener("input", event => {
+  serviceSearch = event.target.value;
+  renderServiceList();
+});
+
+$("#menu-toggle").addEventListener("click", () => {
+  const opened = $("#sidebar").classList.toggle("open");
+  $("#menu-toggle").setAttribute("aria-expanded", String(opened));
+  if (opened) $("#navigation button")?.focus();
+});
+
+/* Atualiza prazos (atrasada / vence em breve) quando a data muda com a página aberta. */
+let currentDay = localDate();
+setInterval(() => {
+  const nextDay = localDate();
+  if (nextDay === currentDay) return;
+  currentDay = nextDay;
+  if (!$("#modal").open) render();
+}, 60000);
+
+/* =====================================================================
+   15. INICIALIZAÇÃO
+   ===================================================================== */
+load();
+setupTheme();
+render();
+</script>
+</body>
+</html>
