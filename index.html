@@ -780,7 +780,7 @@ dialog::backdrop { background: #0b1326aa; }
 
     <div class="sidebar-footer">
       <strong>Nível de risco: Probabilidade (1–5) × Impacto (1–5)</strong>
-      <p>Modelo configurado para este painel.<br>Uso local · sem autenticação</p>
+      <p>Modelo configurado para este painel.<br>Dados sincronizados via Supabase · sem autenticação</p>
     </div>
   </aside>
 
@@ -826,6 +826,7 @@ dialog::backdrop { background: #0b1326aa; }
 <section id="print-area" aria-label="Relatório para impressão"></section>
 
 <noscript><p style="padding:20px">Este painel precisa de JavaScript para funcionar.</p></noscript>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 "use strict";
 /* ===== model.js ===== */
@@ -1200,202 +1201,323 @@ function removeLegacyExamples(base) {
 
 /* ===== storage.js ===== */
 /*
- * Camada de armazenamento.
+ * Camada de armazenamento sincronizada com o Supabase.
  *
- * Preferência: IndexedDB (sem o limite de ~5 MB do localStorage).
- * Alternativas, nesta ordem: localStorage (modo compatível) e memória.
+ * - Cada unidade, serviço, projeto, risco e ação é uma linha no banco.
+ * - Ao salvar, só as linhas que mudaram são enviadas (comparação com o último estado conhecido).
+ * - Mudanças feitas por outras pessoas chegam em tempo real (Supabase Realtime) e são aplicadas aqui.
+ * - Na primeira execução, se o banco estiver vazio e houver dados antigos neste navegador
+ *   (IndexedDB ou localStorage), eles são enviados uma única vez ao banco.
  *
- * Também faz:
- *  - migração única dos dados antigos do localStorage para o IndexedDB;
- *  - detecção de conflito entre abas (compara a "última alteração" gravada);
- *  - aviso às outras abas quando algo é salvo (BroadcastChannel / evento storage).
+ * Preencha as duas constantes abaixo com os dados do seu projeto Supabase
+ * (Project Settings > API: "Project URL" e a chave "anon public").
  */
 
+const SUPABASE_URL = "COLE_AQUI_A_URL_DO_PROJETO";
+const SUPABASE_ANON_KEY = "COLE_AQUI_A_CHAVE_ANON";
+
 const STATUS = {
-  saved: "Salvo neste navegador",
+  saved: "Sincronizado com o Supabase",
   saving: "Salvando…",
-  memory: "Alterações em memória",
-  unavailable: "Armazenamento local indisponível",
-  quota: "Cota do navegador excedida",
+  memory: "Alterações apenas em memória",
+  unavailable: "Sem conexão com o Supabase",
+  quota: "Limite do Supabase excedido",
   stale: "Dados desatualizados — recarregue a página"
 };
 
-const DB_NAME = "agu-riscos";
-const STORE = "kv";
-const KEY = "state";
-const LEGACY_KEY = "agu.riscos.corporativos.v1";
-const MIGRATED_FLAG = "agu.riscos.idb-migrated.v1";
-const LOCAL_QUOTA_CHARS = 5000000;
-const CHANNEL_NAME = "agu-riscos-sync";
-
-let backend = "memory"; // "idb" | "localstorage" | "memory"
-let db = null;
-let knownVersion = null; // lastModified que esta aba leu ou gravou por último
-let channel = null;
-let pending = null;
-let writing = null;
-let localChars = 0;
-let persistenceAsked = false;
-const listeners = [];
-
-const importLimitMb = () => (backend === "idb" ? 50 : 4);
-
-/* ---------- acesso seguro ao localStorage ---------- */
-function lsGet(key) {
-  try { return localStorage.getItem(key); } catch { return null; }
-}
-
-function lsSet(key, value) {
-  try { localStorage.setItem(key, value); return true; } catch { return false; }
-}
-
-const hasLocalStorage = () => {
-  try { return typeof localStorage !== "undefined" && localStorage !== null; } catch { return false; }
+const TABLES = {
+  unit: "agu_unit",
+  services: "agu_services",
+  projects: "agu_projects",
+  risks: "agu_risks",
+  actions: "agu_actions"
 };
 
-/* ---------- IndexedDB ---------- */
-function openDB() {
-  return new Promise((resolve, reject) => {
-    if (typeof indexedDB === "undefined" || !indexedDB) {
-      reject(new Error("IndexedDB indisponível."));
-      return;
-    }
+const LEGACY_DB = "agu-riscos";
+const LEGACY_STORE = "kv";
+const LEGACY_KEY_IDB = "state";
+const LEGACY_KEY = "agu.riscos.corporativos.v1";
+const PAGE = 1000;
+const CHUNK = 500;
 
-    const request = indexedDB.open(DB_NAME, 1);
-    request.onupgradeneeded = () => request.result.createObjectStore(STORE);
-    request.onerror = () => reject(request.error || new Error("Falha ao abrir o IndexedDB."));
-    request.onblocked = () => reject(new Error("Abertura do IndexedDB bloqueada."));
-    request.onsuccess = () => {
-      const connection = request.result;
-      connection.onversionchange = () => connection.close();
-      resolve(connection);
-    };
-  });
+let sb = null;
+let backend = "memory"; // "supabase" | "memory"
+let known = new Map();   // chave -> { table, id, sig } do último estado conhecido no banco
+let pending = null;
+let writing = null;
+let syncTimer = null;
+let resyncAfter = false;
+let realtime = null;
+const remoteListeners = [];
+
+const importLimitMb = () => 50;
+
+const isConfigured = () =>
+  typeof window.supabase?.createClient === "function" &&
+  /^https:\/\/.+/.test(SUPABASE_URL) &&
+  SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.startsWith("COLE_");
+
+/* ---------- serialização estável (o jsonb do Postgres reordena as chaves) ---------- */
+function canon(value) {
+  if (Array.isArray(value)) return "[" + value.map(canon).join(",") + "]";
+  if (value && typeof value === "object") {
+    return "{" + Object.keys(value).sort()
+      .filter(key => value[key] !== undefined)
+      .map(key => JSON.stringify(key) + ":" + canon(value[key])).join(",") + "}";
+  }
+  return JSON.stringify(value === undefined ? null : value);
 }
 
-function idbRead() {
-  return new Promise((resolve, reject) => {
-    const request = db.transaction(STORE, "readonly").objectStore(STORE).get(KEY);
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
+/* ---------- estado <-> linhas ---------- */
+function toRows(s) {
+  const rows = new Map();
+  const add = (table, id, data, riskId) => {
+    const row = { table, id, data };
+    if (riskId !== undefined) row.risk_id = riskId;
+    rows.set(table + "|" + id, { ...row, sig: canon({ data, risk_id: riskId ?? null }) });
+  };
 
-/* Leitura e gravação na mesma transação: se outra aba gravou nesse meio-tempo, há conflito. */
-function idbWrite(value, force) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, "readwrite");
-    const store = tx.objectStore(STORE);
-    let conflict = false;
+  add(TABLES.unit, "unit", { ...s.unit, lastModified: s.lastModified ?? null });
+  s.services.forEach(item => add(TABLES.services, item.id, item));
+  s.projects.forEach(item => add(TABLES.projects, item.id, item));
 
-    const read = store.get(KEY);
-    read.onsuccess = () => {
-      const current = read.result;
-      const currentVersion = current ? (current.lastModified ?? null) : null;
-
-      if (!force && current && currentVersion !== knownVersion) {
-        conflict = true;
-        tx.abort();
-        return;
-      }
-
-      store.put(value, KEY);
-    };
-
-    tx.oncomplete = () => resolve({ conflict: false });
-    tx.onabort = () => (conflict
-      ? resolve({ conflict: true })
-      : reject(tx.error || new Error("Transação abortada.")));
-  });
-}
-
-/* ---------- validação ao carregar ---------- */
-function prepare(raw) {
-  const valid = validateState(raw);
-  const before = JSON.stringify(valid);
-  const state = removeLegacyExamples(valid);
-  const changed = JSON.stringify(state) !== before || raw.schemaVersion !== SCHEMA_VERSION;
-  return { state, changed };
-}
-
-const unreadable = error =>
-  "A base salva não pôde ser lida: " + error.message +
-  " A cópia anterior será preservada. Importe um backup válido para retomar o salvamento.";
-
-async function initIDB(out) {
-  const raw = await idbRead();
-
-  if (raw !== undefined) {
-    try {
-      const { state, changed } = prepare(raw);
-      out.state = state;
-      knownVersion = raw.lastModified ?? null;
-      if (changed) await writeBackend(state, true);
-    } catch (error) {
-      // Aqui só a validação lança; falhas de gravação voltam como resultado.
-      out.blocked = true;
-      out.status = STATUS.memory;
-      out.message = unreadable(error);
-    }
-    return;
+  for (const risk of s.risks) {
+    const { actions, ...rest } = risk;
+    add(TABLES.risks, risk.id, rest);
+    actions.forEach((action, position) =>
+      add(TABLES.actions, action.id, { ...action, position }, risk.id));
   }
 
-  const legacy = lsGet(LEGACY_KEY);
-
-  if (legacy !== null && lsGet(MIGRATED_FLAG) === null) {
-    try {
-      const { state } = prepare(JSON.parse(legacy));
-      out.state = state;
-      out.migrated = true;
-      knownVersion = null;
-      const result = await writeBackend(state, true);
-      if (result.ok) lsSet(MIGRATED_FLAG, "1");
-      else out.status = result.status;
-    } catch (error) {
-      out.blocked = true;
-      out.status = STATUS.memory;
-      out.message = unreadable(error);
-    }
-    return;
-  }
-
-  knownVersion = null;
-  await writeBackend(out.state, true);
+  return rows;
 }
 
-function initLocal(out) {
-  const saved = lsGet(LEGACY_KEY);
+function knownFrom(rows) {
+  const map = new Map();
+  for (const [key, row] of rows) map.set(key, { table: row.table, id: row.id, sig: row.sig });
+  return map;
+}
 
-  if (saved === null) {
-    const written = writeLocal(out.state);
-    if (!written.ok) out.status = written.status;
-    return;
+function sameKnown(a, b) {
+  if (a.size !== b.size) return false;
+  for (const [key, item] of a) if (b.get(key)?.sig !== item.sig) return false;
+  return true;
+}
+
+async function fetchTable(table) {
+  const columns = table === TABLES.actions ? "id,risk_id,data" : "id,data";
+  const all = [];
+
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await sb.from(table).select(columns).order("id").range(from, from + PAGE - 1);
+    if (error) throw error;
+    all.push(...data);
+    if (data.length < PAGE) break;
   }
 
-  localChars = saved.length;
+  return all;
+}
+
+async function fetchRemote() {
+  const [unit, services, projects, risks, actions] = await Promise.all(
+    [TABLES.unit, TABLES.services, TABLES.projects, TABLES.risks, TABLES.actions].map(fetchTable)
+  );
+
+  const byRisk = new Map();
+  actions
+    .sort((a, b) => (a.data.position ?? 0) - (b.data.position ?? 0))
+    .forEach(row => {
+      if (!byRisk.has(row.risk_id)) byRisk.set(row.risk_id, []);
+      byRisk.get(row.risk_id).push(row.data);
+    });
+
+  const { lastModified = null, ...unitData } = unit[0]?.data || emptyState().unit;
+
+  const raw = {
+    schemaVersion: SCHEMA_VERSION,
+    nextRiskNumber: 1,
+    unit: unitData,
+    lastModified,
+    services: services.map(row => row.data),
+    projects: projects.map(row => row.data),
+    risks: risks.map(row => ({ ...row.data, actions: byRisk.get(row.id) || [] }))
+  };
+
+  return { empty: unit.length === 0, state: validateState(raw) };
+}
+
+/* ---------- envio das diferenças ---------- */
+const chunks = (list, size) => {
+  const out = [];
+  for (let i = 0; i < list.length; i += size) out.push(list.slice(i, i + size));
+  return out;
+};
+
+async function pushDiff(value) {
+  const next = toRows(value);
+  const stamp = new Date().toISOString();
+  const upserts = new Map();
+  const deletes = new Map();
+
+  for (const [key, row] of next) {
+    if (known.get(key)?.sig === row.sig) continue;
+    if (!upserts.has(row.table)) upserts.set(row.table, []);
+    const payload = { id: row.id, data: row.data, updated_at: stamp };
+    if (row.risk_id !== undefined) payload.risk_id = row.risk_id;
+    upserts.get(row.table).push(payload);
+  }
+
+  for (const [key, item] of known) {
+    if (next.has(key)) continue;
+    if (!deletes.has(item.table)) deletes.set(item.table, []);
+    deletes.get(item.table).push(item.id);
+  }
+
+  // Ordem: pais antes dos filhos ao gravar; filhos antes dos pais ao apagar.
+  const writeOrder = [TABLES.services, TABLES.projects, TABLES.risks, TABLES.actions, TABLES.unit];
+  const deleteOrder = [TABLES.actions, TABLES.risks, TABLES.services, TABLES.projects];
+
+  for (const table of writeOrder) {
+    for (const part of chunks(upserts.get(table) || [], CHUNK)) {
+      const { error } = await sb.from(table).upsert(part, { onConflict: "id" });
+      if (error) throw error;
+    }
+  }
+
+  for (const table of deleteOrder) {
+    for (const part of chunks(deletes.get(table) || [], CHUNK)) {
+      const { error } = await sb.from(table).delete().in("id", part);
+      if (error) throw error;
+    }
+  }
+
+  known = knownFrom(next);
+}
+
+function failureStatus(error) {
+  const text = String(error?.message || "");
+  return /quota|limit|exceed/i.test(text) ? STATUS.quota : STATUS.unavailable;
+}
+
+async function writeBackend(value) {
+  if (backend !== "supabase") return { ok: false, status: STATUS.memory };
 
   try {
-    const { state, changed } = prepare(JSON.parse(saved));
-    out.state = state;
-    if (changed) writeLocal(state);
-  } catch (error) {
-    out.blocked = true;
-    out.status = STATUS.memory;
-    out.message = unreadable(error);
-  }
-}
-
-function writeLocal(value) {
-  try {
-    const json = JSON.stringify(value);
-    localStorage.setItem(LEGACY_KEY, json);
-    localChars = json.length;
+    await pushDiff(value);
     return { ok: true, status: STATUS.saved };
   } catch (error) {
-    return {
-      ok: false,
-      status: error?.name === "QuotaExceededError" ? STATUS.quota : STATUS.unavailable
+    console.error("Falha ao salvar no Supabase:", error);
+    return { ok: false, status: failureStatus(error) };
+  }
+}
+
+/* Várias gravações seguidas são reunidas: só o estado mais recente é enviado. */
+async function flush() {
+  let result = { ok: false, status: STATUS.memory };
+
+  try {
+    while (pending) {
+      const { value } = pending;
+      pending = null;
+      result = await writeBackend(value);
+    }
+  } finally {
+    writing = null;
+  }
+
+  result.usageRatio = 0;
+  if (resyncAfter) { resyncAfter = false; scheduleSync(); }
+  return result;
+}
+
+function saveState(state) {
+  const copy = typeof structuredClone === "function"
+    ? structuredClone(state)
+    : JSON.parse(JSON.stringify(state));
+
+  pending = { value: copy };
+  if (!writing) writing = flush();
+  return writing;
+}
+
+/* ---------- mudanças feitas por outras pessoas ---------- */
+function scheduleSync() {
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncRemote, 400);
+}
+
+async function syncRemote() {
+  if (backend !== "supabase") return;
+  if (writing || pending) { resyncAfter = true; return; }
+
+  try {
+    const { state } = await fetchRemote();
+    const rows = knownFrom(toRows(state));
+    if (sameKnown(rows, known)) return;
+
+    // Só marca como conhecido depois que a tela realmente aplicou: se o app adiar
+    // (janela aberta), o próximo salvamento não apaga o que veio de fora.
+    const applied = remoteListeners.map(callback => callback(state)).some(Boolean);
+    if (applied) known = rows;
+  } catch (error) {
+    console.error("Falha ao sincronizar:", error);
+  }
+}
+
+function onRemoteState(callback) {
+  remoteListeners.push(callback);
+}
+
+function requestSync() {
+  scheduleSync();
+}
+
+/* ---------- dados antigos deste navegador (migração única) ---------- */
+function readLegacyIDB() {
+  return new Promise(resolve => {
+    if (typeof indexedDB === "undefined" || !indexedDB) return resolve(null);
+
+    let request;
+    try { request = indexedDB.open(LEGACY_DB); } catch { return resolve(null); }
+
+    request.onupgradeneeded = () => request.transaction.abort(); // banco não existia
+    request.onerror = () => resolve(null);
+    request.onsuccess = () => {
+      const connection = request.result;
+      try {
+        if (!connection.objectStoreNames.contains(LEGACY_STORE)) {
+          connection.close();
+          return resolve(null);
+        }
+        const get = connection.transaction(LEGACY_STORE, "readonly")
+          .objectStore(LEGACY_STORE).get(LEGACY_KEY_IDB);
+        get.onsuccess = () => { connection.close(); resolve(get.result ?? null); };
+        get.onerror = () => { connection.close(); resolve(null); };
+      } catch {
+        connection.close();
+        resolve(null);
+      }
     };
+  });
+}
+
+async function readLegacyState() {
+  let raw = await readLegacyIDB();
+
+  if (!raw) {
+    try {
+      const text = localStorage.getItem(LEGACY_KEY);
+      raw = text ? JSON.parse(text) : null;
+    } catch { raw = null; }
+  }
+
+  if (!raw) return null;
+
+  try {
+    const state = removeLegacyExamples(validateState(raw));
+    const hasData = state.services.length || state.projects.length || state.risks.length;
+    return hasData ? state : null;
+  } catch {
+    return null;
   }
 }
 
@@ -1411,156 +1533,75 @@ async function initStorage() {
     usageRatio: 0
   };
 
-  try {
-    db = await openDB();
-    backend = "idb";
-  } catch {
-    backend = hasLocalStorage() ? "localstorage" : "memory";
-  }
-
-  if (backend === "idb") {
-    try {
-      await initIDB(out);
-      try {
-        channel = new BroadcastChannel(CHANNEL_NAME);
-        channel.onmessage = () => notify();
-      } catch { /* BroadcastChannel indisponível: a detecção por versão continua funcionando */ }
-    } catch {
-      backend = hasLocalStorage() ? "localstorage" : "memory";
-      out.migrated = false;
-    }
-  }
-
-  if (backend === "localstorage") {
-    initLocal(out);
-    window.addEventListener("storage", event => {
-      if (event.key === null || event.key === LEGACY_KEY) notify();
-    });
-  }
-
-  if (backend === "memory") {
+  if (!isConfigured()) {
     out.status = STATUS.memory;
-    out.message = out.message ||
-      "Este navegador não permite armazenamento local. Exporte backups com frequência.";
+    out.blocked = true;
+    out.message = typeof window.supabase?.createClient !== "function"
+      ? "Não foi possível carregar a biblioteca do Supabase (verifique a conexão com a internet e recarregue a página)."
+      : "Supabase não configurado. Preencha SUPABASE_URL e SUPABASE_ANON_KEY no início do bloco storage.js deste arquivo.";
+    return out;
+  }
+
+  try {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
+    backend = "supabase";
+
+    const { empty, state } = await fetchRemote();
+    out.state = state;
+    known = knownFrom(toRows(state));
+
+    if (empty) {
+      known = new Map(); // banco vazio: tudo precisa ser gravado, inclusive a linha da unidade
+      const legacy = await readLegacyState();
+      if (legacy) {
+        out.state = legacy;
+        out.migrated = true;
+      }
+      const result = await writeBackend(out.state);
+      if (!result.ok) out.status = result.status;
+    }
+
+    realtime = sb.channel("agu-riscos-sync")
+      .on("postgres_changes", { event: "*", schema: "public" }, scheduleSync)
+      .subscribe();
+  } catch (error) {
+    console.error("Falha ao carregar do Supabase:", error);
+    backend = "memory";
+    out.blocked = true; // sem leitura confiável, não gravar: evitaria sobrescrever o banco
+    out.status = STATUS.unavailable;
+    out.message = "Não foi possível carregar os dados do Supabase: " + (error?.message || error) +
+      ". Confira a URL, a chave e se o SQL do esquema foi executado; depois recarregue a página.";
   }
 
   out.backend = backend;
-  out.usageRatio = await usageRatio();
   return out;
 }
 
-function notify() {
-  listeners.forEach(callback => callback());
-}
-
-function onExternalChange(callback) {
-  listeners.push(callback);
-}
-
-async function usageRatio() {
-  if (backend === "idb") {
-    try {
-      const estimate = await navigator.storage?.estimate?.();
-      return estimate?.quota ? estimate.usage / estimate.quota : 0;
-    } catch {
-      return 0;
-    }
-  }
-
-  return backend === "localstorage" ? localChars / LOCAL_QUOTA_CHARS : 0;
-}
-
-async function writeBackend(value, force) {
-  if (backend === "idb") {
-    try {
-      const result = await idbWrite(value, force);
-      if (result.conflict) return { ok: false, conflict: true, status: STATUS.stale };
-
-      knownVersion = value.lastModified ?? null;
-      channel?.postMessage({ type: "saved" });
-
-      if (!persistenceAsked) {
-        persistenceAsked = true;
-        navigator.storage?.persist?.().catch?.(() => {});
-      }
-
-      return { ok: true, status: STATUS.saved };
-    } catch (error) {
-      return {
-        ok: false,
-        status: error?.name === "QuotaExceededError" ? STATUS.quota : STATUS.unavailable
-      };
-    }
-  }
-
-  if (backend === "localstorage") return writeLocal(value);
-  return { ok: false, status: STATUS.memory };
-}
-
-/* Várias gravações seguidas são reunidas: só o estado mais recente é escrito. */
-async function flush() {
-  let result = { ok: false, status: STATUS.memory };
+/* Número do próximo risco, sem repetição entre usuários (função SQL agu_next_risk_number). */
+async function newRiskNumber(fallback) {
+  if (backend !== "supabase") return fallback;
 
   try {
-    while (pending) {
-      const { value, force } = pending;
-      pending = null;
-      result = await writeBackend(value, force);
-      if (result.conflict) { pending = null; break; }
-    }
-
-    result.usageRatio = await usageRatio();
-  } finally {
-    writing = null;
+    const { data, error } = await sb.rpc("agu_next_risk_number");
+    if (error || !Number.isInteger(data)) throw error || new Error("resposta inválida");
+    return data;
+  } catch (error) {
+    console.error("Falha ao obter número do risco:", error);
+    return fallback;
   }
-
-  return result;
-}
-
-function saveState(state, { force = false } = {}) {
-  const copy = typeof structuredClone === "function"
-    ? structuredClone(state)
-    : JSON.parse(JSON.stringify(state));
-
-  pending = { value: copy, force: force || (pending?.force ?? false) };
-  if (!writing) writing = flush();
-  return writing;
 }
 
 async function storageInfo() {
-  const info = {
-    backend,
-    usage: null,
-    quota: null,
-    persistent: null,
-    legacy: canClearLegacy()
-  };
-
-  if (backend === "localstorage") {
-    info.usage = localChars;
-    info.quota = LOCAL_QUOTA_CHARS;
-    return info;
-  }
-
-  try {
-    const estimate = await navigator.storage?.estimate?.();
-    if (estimate) { info.usage = estimate.usage ?? null; info.quota = estimate.quota ?? null; }
-    const persisted = await navigator.storage?.persisted?.();
-    info.persistent = typeof persisted === "boolean" ? persisted : null;
-  } catch { /* informações opcionais */ }
-
-  return info;
+  return { backend, usage: null, quota: null, persistent: null, legacy: false };
 }
 
-/* A cópia antiga do localStorage só pode ser apagada depois de migrada para o IndexedDB. */
 function canClearLegacy() {
-  return backend === "idb" && lsGet(LEGACY_KEY) !== null;
+  return false;
 }
 
-function clearLegacyCopy() {
-  if (!canClearLegacy()) return;
-  try { localStorage.removeItem(LEGACY_KEY); } catch { /* sem efeito */ }
-}
+function clearLegacyCopy() {}
 
 /* ===== export.js ===== */
 /* Exportações: backup JSON e planilhas CSV (sem acesso ao DOM, exceto o download). */
@@ -1710,6 +1751,22 @@ async function persist(options = {}) {
   storageUsage = result.usageRatio ?? storageUsage;
   if (result.conflict) markStale();
   return result;
+}
+
+/* Mudanças feitas por outras pessoas: aplicadas na hora, ou adiadas enquanto há uma janela aberta. */
+let remoteWaiting = false;
+
+function applyRemote(next) {
+  if ($("#modal").open) {
+    remoteWaiting = true;
+    return false;
+  }
+
+  remoteWaiting = false;
+  state = next;
+  render();
+  toast("Dados atualizados por outra pessoa.");
+  return true;
 }
 
 function markStale() {
@@ -1888,7 +1945,7 @@ function renderHeader() {
     (unit.operator || "não informado");
   $("#storage-status").textContent = storageStatus;
   $("#last-change").textContent = "Última alteração: " + dateTimeBR(state.lastModified);
-  $("#storage").classList.toggle("saved", storageStatus === "Salvo neste navegador");
+  $("#storage").classList.toggle("saved", storageStatus === STATUS.saved);
 }
 
 function riskCounts() {
@@ -2415,6 +2472,7 @@ function closeModal() {
 
 $("#modal").addEventListener("close", () => {
   if (modalOpener) restoreModalFocus();
+  if (remoteWaiting) requestSync();
 });
 
 $("#modal").addEventListener("keydown", event => {
@@ -2711,7 +2769,7 @@ function riskForm(id = "") {
   get("residualProbability").onchange = updatePreview;
   get("residualImpact").onchange = updatePreview;
 
-  form.onsubmit = event => {
+  form.onsubmit = async event => {
     event.preventDefault();
     if (!validateForm(form)) return;
 
@@ -2744,10 +2802,16 @@ function riskForm(id = "") {
 
     const stamp = now();
     const savedId = existing?.id || uid();
+    let number = null;
+
+    if (!existing) {
+      number = await newRiskNumber(state.nextRiskNumber);
+      state.nextRiskNumber = Math.max(state.nextRiskNumber, number + 1);
+    }
 
     if (existing) Object.assign(existing, values, { updatedAt: stamp });
     else state.risks.push({
-      id: savedId, number: state.nextRiskNumber++, ...values,
+      id: savedId, number, ...values,
       createdAt: stamp, updatedAt: stamp, actions: [], demo: false
     });
 
@@ -2976,7 +3040,7 @@ async function fillStorageDetails() {
   const target = $("#storage-details");
   if (!target) return;
 
-  const names = { idb: "IndexedDB", localstorage: "localStorage (modo compatível)", memory: "somente memória" };
+  const names = { idb: "IndexedDB", localstorage: "localStorage (modo compatível)", memory: "somente memória", supabase: "Supabase (nuvem, compartilhado entre usuários)" };
   target.textContent = "Armazenamento: " + names[info.backend] +
     " · Uso: " + formatBytes(info.usage) + (info.quota ? " de " + formatBytes(info.quota) : "") +
     (info.persistent === true ? " · persistente"
@@ -2998,8 +3062,8 @@ function renderData() {
     <div class="tools">
       <section class="panel">
         <h3>Backup e restauração</h3>
-        <p>O salvamento automático depende deste navegador e pode ficar indisponível ou ser apagado.
-          O backup JSON é necessário para transportar e preservar os dados.</p>
+        <p>Os dados são salvos no Supabase e compartilhados em tempo real entre todos que abrem este painel.
+          Ainda assim, mantenha backups JSON periódicos.</p>
         <div class="buttons">
           <button class="primary" data-cmd="export">Exportar Backup JSON</button>
           <button data-cmd="import">Importar JSON</button>
@@ -3028,9 +3092,9 @@ function renderData() {
           <button data-cmd="retry-save" ${storageBlocked ? "disabled" : ""}>Tentar salvar novamente</button>
           <button data-cmd="clear-legacy" id="clear-legacy" hidden>Apagar cópia antiga (localStorage)</button>
         </div>
-        <p class="help">Os dados ficam em um banco do próprio navegador (IndexedDB), sem o limite de ~5 MB
-          do localStorage. Esta versão não oferece sincronização entre pessoas nem controle de acesso.
-          Se a base for alterada em outra aba, o salvamento é pausado aqui até recarregar a página.</p>
+        <p class="help">Os dados ficam no banco Supabase do projeto. Quem alterar algo aparece na tela das outras
+          pessoas em poucos segundos. Esta versão não tem login nem controle de acesso: quem tiver o link
+          e a chave pública do projeto consegue ler e alterar os dados.</p>
       </section>
 
       <section class="panel">
@@ -3471,7 +3535,7 @@ async function boot() {
 
   setupTheme();
   render();
-  onExternalChange(markStale);
+  onRemoteState(applyRemote);
 
   if (result.migrated) {
     toast("Dados migrados do armazenamento antigo (localStorage) para o IndexedDB.");
