@@ -652,6 +652,10 @@ dialog::backdrop { background: #0b1326aa; }
 
 .score-row.residual { margin-top: 12px; }
 
+.sheet-wrap { max-height: 65vh; overflow: auto; border: 1px solid var(--border); border-radius: 8px; }
+.sheet-wrap table { min-width: 100%; }
+.sheet-wrap th { position: sticky; top: 0; z-index: 1; white-space: nowrap; }
+.sheet-url { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
 .highlight { outline: 4px solid var(--focus) !important; outline-offset: 4px; }
 .mobile-menu { display: none; }
 #print-area { display: none; }
@@ -1878,6 +1882,7 @@ function icon(name) {
     processes: "M3 6h7l2 3h9v11H3z M3 6V4h7l2 2h9v3",
     projects: "M8 6V3h8v3 M3 6h18v15H3z M3 11h18 M10 11v3h4v-3",
     settings: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M12 2v3 M12 19v3 M2 12h3 M19 12h3 M5 5l2 2 M17 17l2 2",
+    sheet: "M3 4h18v16H3z M3 10h18 M3 15h18 M9 4v16 M15 4v16",
     data: "M5 5c0-4 14-4 14 0s-14 4-14 0 M5 5v7c0 4 14 4 14 0V5 M5 12v7c0 4 14 4 14 0v-7"
   };
   return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -1968,6 +1973,7 @@ function renderSidebar() {
     ["dashboard", "Dashboard Executivo", criticalTotal],
     ["processes", "Processos & Serviços", processTotal],
     ["projects", "Projetos & Iniciativas", state.projects.length],
+    ["sheet", "Planilha vinculada", null],
     ["settings", "Configurações da Unidade", null],
     ["data", "Ferramentas de Dados", null]
   ];
@@ -2007,6 +2013,7 @@ function navigate(nextView, entity = "") {
   if (view === "projects") filters.kind = "project";
   filters.entity = entity;
   render();
+  if (view === "sheet") loadSheet(true); // sempre busca a versão atual ao abrir a aba
   $("#sidebar").classList.remove("open");
   $("#menu-toggle").setAttribute("aria-expanded", "false");
   $("#main").focus({ preventScroll: true });
@@ -2106,6 +2113,8 @@ function render() {
     renderResults();
   } else if (view === "settings") {
     renderSettings();
+  } else if (view === "sheet") {
+    renderSheet();
   } else {
     renderData();
   }
@@ -3050,6 +3059,150 @@ async function fillStorageDetails() {
   if (legacy) legacy.hidden = !info.legacy;
 }
 
+/* PLANILHA VINCULADA (somente leitura): busca o CSV/Excel do link a cada abertura da aba */
+const SHEET_URL = ""; // link padrão do CSV/Excel; cada pessoa também pode informar o seu na própria aba
+const SHEET_URL_KEY = "agu.riscos.sheet-url.v1";
+const SHEET_ROW_LIMIT = 2000;
+let sheetState = { status: "idle", rows: [], message: "", loadedAt: null, truncated: false };
+
+function sheetUrl() {
+  let saved = "";
+  try { saved = localStorage.getItem(SHEET_URL_KEY) || ""; } catch {}
+  return (saved || SHEET_URL).trim();
+}
+
+/* Links "Compartilhar" do Google Sheets viram o endereço de exportação em CSV. */
+function sheetFetchUrl(url) {
+  const match = url.match(/^https:\/\/docs\.google\.com\/spreadsheets\/d\/([\w-]+)/);
+  if (!match || /\/pub(\?|$)/.test(url) && /output=csv/.test(url)) return url;
+  const gid = (url.match(/[#&?]gid=(\d+)/) || [])[1];
+  return "https://docs.google.com/spreadsheets/d/" + match[1] + "/export?format=csv" + (gid ? "&gid=" + gid : "");
+}
+
+function parseCSV(text) {
+  text = text.replace(/^\uFEFF/, "");
+  const first = text.split(/\r?\n/, 1)[0] || "";
+  const sep = (first.match(/;/g) || []).length > (first.match(/,/g) || []).length ? ";" : ",";
+  const rows = [];
+  let row = [], cell = "", quoted = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quoted) {
+      if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+      else if (c === '"') quoted = false;
+      else cell += c;
+    } else if (c === '"') quoted = true;
+    else if (c === sep) { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i + 1] === "\n") i++;
+      row.push(cell); cell = "";
+      rows.push(row); row = [];
+    } else cell += c;
+  }
+
+  if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(value => String(value).trim() !== ""));
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const tag = document.createElement("script");
+    tag.src = src;
+    tag.onload = resolve;
+    tag.onerror = () => reject(new Error("Não foi possível carregar o leitor de Excel."));
+    document.head.append(tag);
+  });
+}
+
+async function readSheet(url) {
+  const response = await fetch(sheetFetchUrl(url), { cache: "no-store" });
+  if (!response.ok) throw new Error("O link respondeu com erro " + response.status + ".");
+  const type = response.headers.get("content-type") || "";
+  const isExcel = /\.xlsx?($|\?)/i.test(url.split("#")[0]) || /spreadsheetml|ms-excel|octet-stream/.test(type);
+
+  if (isExcel) {
+    if (!window.XLSX) await loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js");
+    const book = XLSX.read(await response.arrayBuffer(), { type: "array", cellDates: true });
+    const sheet = book.Sheets[book.SheetNames[0]];
+    return XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: "", dateNF: "dd/mm/yyyy" })
+      .filter(r => r.some(value => String(value).trim() !== ""));
+  }
+
+  return parseCSV(await response.text());
+}
+
+async function loadSheet(force = false) {
+  const url = sheetUrl();
+  if (!url) { sheetState = { status: "empty", rows: [], message: "", loadedAt: null, truncated: false }; return renderSheet(); }
+  if (sheetState.status === "loading") return;
+
+  sheetState = { ...sheetState, status: "loading" };
+  renderSheet();
+
+  try {
+    const rows = await readSheet(url);
+    sheetState = {
+      status: "ok",
+      rows: rows.slice(0, SHEET_ROW_LIMIT + 1),
+      truncated: rows.length > SHEET_ROW_LIMIT + 1,
+      message: "",
+      loadedAt: new Date().toISOString()
+    };
+  } catch (error) {
+    const blocked = error instanceof TypeError;
+    sheetState = {
+      status: "error", rows: [], loadedAt: null, truncated: false,
+      message: blocked
+        ? "O navegador não conseguiu ler o link. Ele precisa ser público e permitir leitura por páginas web (CORS). " +
+          "Links do Google Sheets e de arquivos em hospedagem pública costumam funcionar; OneDrive e SharePoint, em geral, não."
+        : error.message
+    };
+  }
+
+  if (view === "sheet") renderSheet();
+}
+
+function renderSheet() {
+  const url = sheetUrl();
+  const { status, rows, message, loadedAt, truncated } = sheetState;
+  const [head = [], ...body] = rows;
+  const width = Math.max(0, ...rows.map(r => r.length));
+  const cols = Array.from({ length: width }, (_, i) => head[i] ?? "");
+
+  let content = "";
+  if (status === "loading") content = '<p class="muted">Buscando a planilha…</p>';
+  else if (status === "empty") content = '<div class="empty"><p>Nenhum link informado. Cole abaixo o link do arquivo Excel ou CSV.</p></div>';
+  else if (status === "error") content = `<div class="notice" role="alert">${escapeHTML(message)}</div>`;
+  else if (status === "ok" && !rows.length) content = '<div class="empty"><p>A planilha está vazia.</p></div>';
+  else if (status === "ok") {
+    content = `<div class="sheet-wrap"><table><thead><tr>${
+      cols.map(c => `<th>${escapeHTML(c)}</th>`).join("")
+    }</tr></thead><tbody>${
+      body.map(r => `<tr>${cols.map((_, i) => `<td>${escapeHTML(r[i] ?? "")}</td>`).join("")}</tr>`).join("")
+    }</tbody></table></div>
+    <p class="help">${numberBR(body.length)} linha(s)${truncated ? " (exibindo as primeiras " + numberBR(SHEET_ROW_LIMIT) + ")" : ""}
+      · buscada em ${escapeHTML(dateTimeBR(loadedAt))}</p>`;
+  }
+
+  $("#main").innerHTML = `${noticeHTML()}
+    <div class="heading"><div>
+      <div class="eyebrow">Somente leitura</div>
+      <h2>Planilha vinculada</h2>
+      <p>Mostra sempre o conteúdo atual do arquivo; nada aqui altera os riscos.</p>
+    </div>
+    <div class="buttons"><button class="primary" data-cmd="sheet-refresh" ${url ? "" : "disabled"}>Atualizar agora</button></div></div>
+    <section class="panel" style="margin-bottom:20px">
+      <label for="sheet-url">Link do arquivo (Excel .xlsx ou CSV; Google Sheets também)</label>
+      <div class="sheet-url">
+        <input id="sheet-url" type="url" value="${escapeHTML(url)}" placeholder="https://…">
+        <button data-cmd="sheet-save-url">Salvar e buscar</button>
+      </div>
+      <p class="help">O link fica guardado neste navegador. O arquivo é buscado de novo toda vez que esta aba é aberta.</p>
+    </section>
+    <section class="panel">${content}</section>`;
+}
+
 function renderData() {
   $("#main").innerHTML = `
     ${noticeHTML()}
@@ -3367,6 +3520,16 @@ document.addEventListener("click", event => {
     case "csv-context": exportCSV("risks", selectedRisks()); break;
     case "import": $("#import-file").click(); break;
     case "pdf": openPDF(); break;
+    case "sheet-refresh": loadSheet(true); break;
+    case "sheet-save-url": {
+      const value = ($("#sheet-url")?.value || "").trim();
+      try {
+        if (value) localStorage.setItem(SHEET_URL_KEY, value);
+        else localStorage.removeItem(SHEET_URL_KEY);
+      } catch { toast("Não foi possível guardar o link neste navegador."); }
+      loadSheet(true);
+      break;
+    }
     case "retry-save":
       persist().then(() => {
         renderHeader();
